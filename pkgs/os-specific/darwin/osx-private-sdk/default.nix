@@ -15,14 +15,11 @@ in stdenv.mkDerivation {
   buildInputs = [ python ];
 
   configurePhase = "true";
-
-  buildPhase = ''
-    python PrivateSDK.py -i ${osx_sdk}/Developer/SDKs/MacOSX${sdkVersion}.sdk -o PrivateMacOSX${sdkVersion}.sdk
-  '';
+  buildPhase = "true";
 
   installPhase = ''
-    mkdir -p $out/Developer/SDKs/
-    mv PrivateMacOSX${sdkVersion}.sdk $out/Developer/SDKs
+    /usr/bin/rsync -av ${osx_sdk}/Developer/SDKs/MacOSX${sdkVersion}.sdk/ $out
+    /usr/bin/rsync -av ./ $out
   '';
 
   meta = with stdenv.lib; {
