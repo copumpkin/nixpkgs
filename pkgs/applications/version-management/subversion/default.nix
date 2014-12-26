@@ -17,13 +17,13 @@ assert javahlBindings -> jdk != null && perl != null;
 
 stdenv.mkDerivation (rec {
 
-  version = "1.8.10";
+  version = "1.8.11";
 
   name = "subversion-${version}";
 
   src = fetchurl {
     url = "mirror://apache/subversion/${name}.tar.bz2";
-    sha256 = "1k3xskg2kjfp3zipl46lqx4fq4lhqnswd79qxp1kfhwplz401j8w";
+    sha1 = "161edaee328f4fdcfd2a7c10ecd3fbcd51c61275";
   };
 
   buildInputs = [ zlib apr aprutil sqlite ]
@@ -38,8 +38,8 @@ stdenv.mkDerivation (rec {
     ${if pythonBindings || perlBindings then "--with-swig=${swig}" else "--without-swig"}
     ${if javahlBindings then "--enable-javahl --with-jdk=${jdk}" else ""}
     ${if stdenv.isDarwin then "--enable-keychain" else "--disable-keychain"}
-    ${if saslSupport then "--enable-sasl --with-sasl=${sasl}" else "--disable-sasl"}
-    ${if httpSupport then "--enable-serf --with-serf=${serf}" else "--disable-serf"}
+    ${if saslSupport then "--with-sasl=${sasl}" else "--without-sasl"}
+    ${if httpSupport then "--with-serf=${serf}" else "--without-serf"}
     --with-zlib=${zlib}
     --with-sqlite=${sqlite}
     ${stdenv.lib.optionalString stdenv.isDarwin "--disable-keychain"}

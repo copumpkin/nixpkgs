@@ -24,7 +24,12 @@ stdenv.mkDerivation {
     sha256 = "0mvgvr2hz25p49dhhizcw9591f2h17y2699mpmndis3kzap0c6zy";
   };
 
-  patches = [ ./docbook2texi.patch ./symlinks-in-bin.patch ./cert-path.patch ];
+  patches = [
+    ./docbook2texi.patch
+    ./symlinks-in-bin.patch
+    ./cert-path.patch
+    ./ssl-cert-file.patch
+  ];
 
   buildInputs = [curl openssl zlib expat gettext cpio makeWrapper libiconv]
     ++ stdenv.lib.optionals withManual [ asciidoc texinfo xmlto docbook2x
@@ -55,7 +60,7 @@ stdenv.mkDerivation {
       # Install git-subtree.
       pushd contrib/subtree
       make
-      make install install-doc
+      make install ${stdenv.lib.optionalString withManual "install-doc"}
       popd
       rm -rf contrib/subtree
 
@@ -142,6 +147,6 @@ stdenv.mkDerivation {
     '';
 
     platforms = stdenv.lib.platforms.all;
-    maintainers = with stdenv.lib.maintainers; [ simons the-kenny ];
+    maintainers = with stdenv.lib.maintainers; [ simons the-kenny wmertens ];
   };
 }

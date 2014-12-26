@@ -94,15 +94,15 @@ rec {
       nuke-refs $out/bin/*
 
       rpathify() {
-        libs=$(${darwin.cctools}/bin/otool -L "$1" | tail -n +2 | grep -o "$NIX_STORE.*-\S*" | cat)
+        local libs=$(${darwin.cctools}/bin/otool -L "$1" | tail -n +2 | grep -o "$NIX_STORE.*-\S*") || true
         for lib in $libs; do
           ${darwin.cctools}/bin/install_name_tool -change $lib "@rpath/$(basename $lib)" "$1"
         done
       }
 
       fix_dyld() {
-          # This is clearly a hack. Once we have an install_name_tool-alike that can patch dyld, this will be nicer.
-          ${perl}/bin/perl -i -0777 -pe 's/\/nix\/store\/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-dyld-239\.4\/lib\/dyld/\/usr\/lib\/dyld\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00/sg' "$1"
+        # This is clearly a hack. Once we have an install_name_tool-alike that can patch dyld, this will be nicer.
+        ${perl}/bin/perl -i -0777 -pe 's/\/nix\/store\/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-dyld-239\.4\/lib\/dyld/\/usr\/lib\/dyld\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00/sg' "$1"
       }
 
       # Strip executables even further
@@ -146,35 +146,38 @@ rec {
       for i in $out/in-nixpkgs/*; do
         fix_dyld $i
       done
+    '';
 
+    allowedReferences = [];
+  };
+
+  host = stdenv.mkDerivation {
+    name = "host";
+
+    buildCommand = ''
       mkdir -p $out/nix-support
 
-      for i in "$out/on-server/"*; do
+      for i in "${build}/on-server/"*; do
         echo "file binary-dist $i" >> $out/nix-support/hydra-build-products
       done
 
       echo "darwin-bootstrap-tools-$(date +%Y.%m.%d)" >> $out/nix-support/hydra-release-name
     '';
+
+    allowedReferences = [ build ];
   };
 
   unpack = stdenv.mkDerivation {
     name = "unpack";
 
-    buildCommand = ''
-      ${build}/in-nixpkgs/mkdir $out
-      ${build}/in-nixpkgs/bzip2 -d < ${build}/on-server/bootstrap-tools.cpio.bz2 | (cd $out && ${build}/in-nixpkgs/cpio -v -i)
+    builder = stdenv.shell;
+    args    = [ ./unpack-bootstrap-tools.sh ];
 
-      for i in $out/bin/*; do
-        if ! test -L $i; then
-          echo patching $i
-          libs=$(${darwin.cctools}/bin/otool -L "$i" | tail -n +2 | grep -v libSystem | cat)
+    tarball = "${build}/on-server/bootstrap-tools.cpio.bz2";
 
-          if [ -n "$libs" ]; then
-            $out/bin/install_name_tool -add_rpath $out/lib $i
-          fi
-        fi
-      done
-    '';
+    mkdir = "${build}/in-nixpkgs/mkdir";
+    bzip2 = "${build}/in-nixpkgs/bzip2";
+    cpio  = "${build}/in-nixpkgs/cpio";
 
     allowedReferences = [ "out" ];
   };

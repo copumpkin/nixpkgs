@@ -147,10 +147,10 @@ rec {
 
   # ImageMagick mirrors, see http://www.imagemagick.org/script/download.php.
   imagemagick = [
-    http://ftp.nluug.nl/pub/ImageMagick/
-    ftp://ftp.sunet.se/pub/multimedia/graphics/ImageMagick/
+    ftp://ftp.nluug.nl/pub/ImageMagick/
     ftp://ftp.imagemagick.org/pub/ImageMagick/
     ftp://ftp.imagemagick.net/pub/ImageMagick/
+    ftp://ftp.sunet.se/pub/multimedia/graphics/ImageMagick/
   ];
 
   # CPAN mirrors.
@@ -426,4 +426,9 @@ rec {
     http://sagemath.org/src-old/
   ];
 
+  # MySQL mirrors
+  mysql = [
+    http://mysql.mirrors.pair.com/Downloads/
+    http://cdn.mysql.com/Downloads/
+  ];
 }

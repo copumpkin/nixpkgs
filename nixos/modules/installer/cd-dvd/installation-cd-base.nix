@@ -43,7 +43,10 @@ with lib;
   boot.initrd.kernelModules = [ "fbcon" ];
 
   # Add support for cow filesystems and their utilities
-  boot.supportedFilesystems = [ /* "zfs" */ "btrfs" ];
+  boot.supportedFilesystems = [ "zfs" "btrfs" ];
+
+  # Configure host id for ZFS to work
+  networking.hostId = "8425e349";
 
   # Allow the user to log in as root without a password.
   users.extraUsers.root.initialHashedPassword = "";

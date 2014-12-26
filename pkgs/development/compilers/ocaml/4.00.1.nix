@@ -15,6 +15,8 @@ stdenv.mkDerivation rec {
     sha256 = "33c3f4acff51685f5bfd7c260f066645e767d4e865877bf1613c176a77799951";
   };
 
+  isAnAncientPoS=1;
+
   prefixKey = "-prefix ";
   configureFlags = ["-no-tk"] ++ optionals useX11 [ "-x11lib" x11 ];
   buildFlags = "world" + optionalString useNativeCompilers " bootstrap world.opt";

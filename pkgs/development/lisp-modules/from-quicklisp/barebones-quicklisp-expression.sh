@@ -4,7 +4,11 @@ name="$1"
 
 [ -z "$NIX_LISP_PACKAGES_DEFINED_LIST" ] && export NIX_LISP_PACKAGES_DEFINED_LIST="$(mktemp)"
 
-nix-instantiate "$(dirname "$0")"/../../../../ -A "lispPackages.$name" > /dev/null && exit
+if [ -n "$NIX_LISP_UPDATE_PACKAGE" ] || [ -n "$NIX_LISP_UPDATE_PACKAGES" ]; then
+  export NIX_LISP_UPDATE_PACKAGE=
+else
+  nix-instantiate "$(dirname "$0")"/../../../../ -A "lispPackages.$name" > /dev/null && exit
+fi
 grep "^$name\$" "$NIX_LISP_PACKAGES_DEFINED_LIST" > /dev/null && exit
 
 echo "$name" >> "$NIX_LISP_PACKAGES_DEFINED_LIST"
@@ -30,7 +34,7 @@ url="${ql_src##* }"
 
 [ "$ql_src_type" = "kmr-git" ] && {
   ql_src_type=git
-  url="http://git.b9.com/$url.git" 
+  url="http://git.b9.com/$url.git"
   export NIX_PREFETCH_GIT_DEEP_CLONE=1
 }
 
@@ -81,6 +85,15 @@ url="${ql_src##* }"
     hash=$("$(dirname "$0")/../../../build-support/fetchgit/nix-prefetch-git" "$url" "$rev" | tail -n 1)
     version="git-$(date +%Y%m%d)";
   }
+  [ "${url#http://common-lisp.net/}" != "$url" ] && {
+    http_repo_url="$url"
+    http_repo_url="${http_repo_url/git:/http:}"
+    http_repo_head="$http_repo_url/refs/heads/master"
+    echo "$http_repo_head" >&2
+    rev=$(curl -L "$http_repo_head");
+    hash=$("$(dirname "$0")/../../../build-support/fetchgit/nix-prefetch-git" "$url" "$rev" | tail -n 1)
+    version="git-$(date +%Y%m%d)";
+  }
 }
 
 [ "$ql_src_type" = cvs ] && {
@@ -93,25 +106,49 @@ url="${ql_src##* }"
   unset url
 }
 
+[ "$ql_src_type" = clnet-darcs ] && {
+  ql_src_type=darcs
+  url="http://common-lisp.net/project/$url/darcs/$url/"
+}
+
+[ "$ql_src_type" = darcs ] && {
+  fetcher="pkgs.fetchdarcs"
+  [ -z "$version" ] &&
+  version="$(curl "$url/_darcs/inventory" | grep '\[TAG ' | tail -n 1 | sed -e 's/.* //')"
+  [ -z "$version" ] &&
+  version="$(curl "$url/_darcs/hashed_inventory" | grep '\[TAG ' | tail -n 1 | sed -e 's/.* //')"
+  rev="$version";
+  hash=$(echo "
+  with (import <nixpkgs> {});
+      fetchdarcs {
+        url=''$url'';
+	rev=''$version'';
+	sha256=''0000000000000000000000000000000000000000000000000000000000000000'';
+    }" | nix-instantiate - | tail -n 1 |
+    xargs nix-store -r 2>&1 | tee /dev/stderr | grep 'instead has' | tail -n 1 |
+    sed -e 's/.* instead has .//;s/[^0-9a-z].*//')
+}
+
 [ "$ql_src_type" = froydware-http ] && {
-  dirurl = "http://method-combination.net/lisp/files/";
-  url="$("$(dirname "$0")/../../../build-support/upstream-updater/urls-from-page.sh" "$dirurl" | grep "/$url_" | tail -n 1)"
+  dirurl="http://method-combination.net/lisp/files/";
+  url="$("$(dirname "$0")/../../../build-support/upstream-updater/urls-from-page.sh" "$dirurl" |
+    grep "/${url}_" | grep -v "[.]asc\$" | tail -n 1)"
   ql_src_type=http
 }
 
 [ "$ql_src_type" = http ] && {
   fetcher="pkgs.fetchurl";
-  version="$(echo "$url" | sed -re 's@.*-([0-9.]+)[-._].*@\1@')"
+  version="$(echo "$url" | sed -re 's@.*[-_]([0-9.]+)[-._].*@\1@')"
   hash="$(nix-prefetch-url "$url" | grep . | tail -n 1)"
 }
 
 [ "$ql_src_type" = https ] && {
   fetcher="pkgs.fetchurl";
-  version="$(echo "$url" | sed -re 's@.*-([0-9.]+)[-._].*@\1@')"
+  version="$(echo "$url" | sed -re 's@.*[-_]([0-9.]+)[-._].*@\1@')"
   hash="$(nix-prefetch-url "$url" | grep . | tail -n 1)"
 }
 
-if [ "$ql_src" = '{"error":"Not Found"}' ]; then 
+if [ "$ql_src" = '{"error":"Not Found"}' ]; then
 	echo "# $name: not found"
 else
 cat << EOF | grep -Ev '^[ ]+$'

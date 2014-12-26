@@ -1,5 +1,6 @@
 { stdenv, fetchurl, zlib ? null, zlibSupport ? true, bzip2, includeModules ? false
-, sqlite, tcl, tk, x11, openssl, readline, db, ncurses, gdbm, libX11, self, callPackage }:
+, sqlite, tcl, tk, x11, openssl, readline, db, ncurses, gdbm, libX11, self, callPackage
+, configd, corefoundation }:
 
 assert zlibSupport -> zlib != null;
 
@@ -7,11 +8,11 @@ with stdenv.lib;
 
 let
   majorVersion = "2.7";
-  version = "${majorVersion}.8";
+  version = "${majorVersion}.9";
 
   src = fetchurl {
     url = "http://www.python.org/ftp/python/${version}/Python-${version}.tar.xz";
-    sha256 = "0nh7d3dp75f1aj0pamn4hla8s0l7nbaq4a38brry453xrfh11ppd";
+    sha256 = "05j9in7yygfgl6nml0rixfvj1bbip982w3l54q05f0vyx8a7xllh";
   };
 
   patches =
@@ -27,9 +28,6 @@ let
       # patch python to put zero timestamp into pyc
       # if DETERMINISTIC_BUILD env var is set
       ./deterministic-build.patch
-
-      # http://bugs.python.org/issue21963
-      ./remove-avoid-daemon-thread-shutdown.patch
     ];
 
   ensurePurity = ''
@@ -57,7 +55,7 @@ let
   buildInputs =
     optional (stdenv ? cc && stdenv.cc.libc != null) stdenv.cc.libc ++
     [ bzip2 openssl ] ++ optionals includeModules [ db openssl ncurses gdbm libX11 readline x11 tcl tk sqlite ]
-    ++ optional zlibSupport zlib;
+    ++ optional zlibSupport zlib ++ optionals stdenv.isDarwin [ configd corefoundation ];
 
   # Build the basic Python interpreter without modules that have
   # external dependencies.
@@ -73,6 +71,7 @@ let
     configureFlags = "--enable-shared --with-threads --enable-unicode" + stdenv.lib.optionalString stdenv.isDarwin " --disable-toolbox-glue";
 
     NIX_CFLAGS_COMPILE = optionalString stdenv.isDarwin "-msse2";
+    DETERMINISTIC_BUILD = 1;
 
     setupHook = ./setup-hook.sh;
 
@@ -105,6 +104,7 @@ let
       libPrefix = "python${majorVersion}";
       executable = libPrefix;
       sitePackages = "lib/${libPrefix}/site-packages";
+      interpreter = "${self}/bin/${executable}";
     };
 
     enableParallelBuilding = true;

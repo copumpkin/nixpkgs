@@ -9,6 +9,8 @@ stdenv.mkDerivation rec {
 
   patches = [ ./readlinefix.patch ];
 
+  isAnAncientPoS=1;
+
   preConfigure = ''
     sed -i 's/program.*save/static &/' bc/load.c
   '';

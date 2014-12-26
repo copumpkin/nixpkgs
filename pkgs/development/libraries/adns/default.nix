@@ -21,6 +21,10 @@ stdenv.mkDerivation {
   # http://thread.gmane.org/gmane.linux.distributions.nixos/1328 for details.
   doCheck = false;
 
+  postInstall = if stdenv.isDarwin then ''
+    install_name_tool -id $out/lib/libadns.so.1.3 $out/lib/libadns.so.1.3
+  '' else null;
+
   meta = {
     homepage = "http://www.chiark.greenend.org.uk/~ian/adns/";
     description = "Asynchronous DNS Resolver Library";

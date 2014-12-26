@@ -5,6 +5,7 @@
 , ncurses, readline, cursesSupport ? false
 , groff, docSupport ? false
 , ruby_1_8_7, autoreconfHook, bison, useRailsExpress ? true
+, libiconv
 }:
 
 let
@@ -32,7 +33,8 @@ stdenv.mkDerivation rec {
   # Have `configure' avoid `/usr/bin/nroff' in non-chroot builds.
   NROFF = "${groff}/bin/nroff";
 
-  buildInputs = ops useRailsExpress [ autoreconfHook bison ]
+  buildInputs = [libiconv]
+    ++ (ops useRailsExpress [ autoreconfHook bison ] )
     ++ (ops cursesSupport [ ncurses readline ] )
     ++ (op docSupport groff )
     ++ (op zlibSupport zlib)

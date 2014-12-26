@@ -6,6 +6,7 @@
 , groff, docSupport ? false
 , libyaml, yamlSupport ? true
 , ruby_1_9_3, autoreconfHook, bison, useRailsExpress ? true
+, libiconv
 }:
 
 let
@@ -33,7 +34,8 @@ stdenv.mkDerivation rec {
   # Have `configure' avoid `/usr/bin/nroff' in non-chroot builds.
   NROFF = "${groff}/bin/nroff";
 
-  buildInputs = ops useRailsExpress [ autoreconfHook bison ]
+  buildInputs = [libiconv]
+    ++ (ops useRailsExpress [ autoreconfHook bison ] )
     ++ (ops cursesSupport [ ncurses readline ] )
     ++ (op docSupport groff )
     ++ (op zlibSupport zlib)
@@ -47,14 +49,6 @@ stdenv.mkDerivation rec {
     ++ (op (!cursesSupport && stdenv.isDarwin) readline);
 
   enableParallelBuilding = true;
-
-  # Fix a build failure on systems with nix store optimisation.
-  # (The build process attempted to copy file a overwriting file b, where a and
-  # b are hard-linked, which results in cp returning a non-zero exit code.)
-  # https://github.com/NixOS/nixpkgs/issues/4266
-  postUnpack = ''
-    rm "$sourceRoot/enc/unicode/name2ctype.h"
-  '';
 
   patches = [
     ./ruby19-parallel-install.patch
@@ -92,6 +86,8 @@ stdenv.mkDerivation rec {
   '';
 
   installFlags = stdenv.lib.optionalString docSupport "install-doc";
+
+  CFLAGS = stdenv.lib.optionalString stdenv.isDarwin "-mmacosx-version-min=10.7";
 
   postInstall = ''
     # Bundler tries to create this directory

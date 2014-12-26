@@ -1,13 +1,13 @@
 { stdenv, fetchurl, makeWrapper, jre, cpio, gawk, gnugrep, gnused, procps, swt, gtk2, glib, libXtst }:
 
-let version = "3.6.3";
+let version = "3.6.4";
 
 in stdenv.mkDerivation rec {
   name = "crashplan-${version}";
 
   crashPlanArchive = fetchurl {
     url = "http://download.crashplan.com/installs/linux/install/CrashPlan/CrashPlan_${version}_Linux.tgz";
-    sha256 = "0v01fzc62bxr6lpamnxg1nb7vh4a8ky6mahbq76kmjxfqv7q0mb0";
+    sha256 = "0xmzpxfm8vghk552jy167wg1nky1pp93dqds1p922hn73g0x5cv3";
   };
 
   srcs = [ crashPlanArchive ];
@@ -16,7 +16,7 @@ in stdenv.mkDerivation rec {
     description = "An online/offline backup solution";
     homepage = "http://www.crashplan.org";
     license = licenses.unfree;
-    maintainers = with maintainers; [ sztupi ];
+    maintainers = with maintainers; [ sztupi iElectric ];
   };
 
   buildInputs = [ makeWrapper cpio ];
@@ -25,7 +25,7 @@ in stdenv.mkDerivation rec {
 
   manifestdir = "${vardir}/manifest";
 
-  patches = [ ./CrashPlanEngine.patch ];
+  patches = [ ./CrashPlanEngine.patch ./CrashPlanDesktop.patch ];
 
   installPhase = ''
     mkdir $out

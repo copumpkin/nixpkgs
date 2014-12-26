@@ -4,8 +4,8 @@
 
 cabal.mkDerivation (self: {
   pname = "extra";
-  version = "0.7";
-  sha256 = "11839h4915xjgmz8av60pn8qaw3b0ckbpw4l9nq5a77qb9rgpbfs";
+  version = "1.0";
+  sha256 = "0ainwq8f2mp1wc30srl971xy4qnrcyrcyig1kmrxx951hgav1dkb";
   buildDepends = [ filepath time ];
   testDepends = [ filepath QuickCheck time ];
   meta = {

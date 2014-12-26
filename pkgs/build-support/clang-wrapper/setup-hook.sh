@@ -10,6 +10,14 @@ addCVars () {
     if test -d $1/lib; then
         export NIX_LDFLAGS="$NIX_LDFLAGS -L$1/lib"
     fi
+
+    if test -d $1/System/Library/Frameworks; then
+        export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -F$1/System/Library/Frameworks"
+    fi
+
+    if test -d $1/Library/Frameworks; then
+        export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -F$1/Library/Frameworks"
+    fi
 }
 
 envHooks=(${envHooks[@]} addCVars)

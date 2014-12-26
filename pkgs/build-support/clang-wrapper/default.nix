@@ -65,11 +65,6 @@ stdenv.mkDerivation {
        abort "don't know the name of the dynamic linker for this platform");
   };
 
-  passthru = {
-    progname = "clang";
-    prognamexx = "clang++";
-  };
-
   meta =
     let clang_ = if clang != null then clang else {}; in
     (if clang_ ? meta then removeAttrs clang.meta ["priority"] else {}) //

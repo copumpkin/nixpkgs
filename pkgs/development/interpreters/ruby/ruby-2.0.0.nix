@@ -7,6 +7,7 @@
 , libyaml, yamlSupport ? true
 , libffi, fiddleSupport ? true
 , ruby_2_0_0, autoreconfHook, bison, useRailsExpress ? true
+, libiconv
 }:
 
 let
@@ -34,7 +35,8 @@ stdenv.mkDerivation rec {
   # Have `configure' avoid `/usr/bin/nroff' in non-chroot builds.
   NROFF = "${groff}/bin/nroff";
 
-  buildInputs = ops useRailsExpress [ autoreconfHook bison ]
+  buildInputs = [libiconv]
+    ++ (ops useRailsExpress [ autoreconfHook bison ] )
     ++ (op fiddleSupport libffi)
     ++ (ops cursesSupport [ ncurses readline ] )
     ++ (op docSupport groff )
@@ -50,18 +52,12 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  # Fix a build failure on systems with nix store optimisation.
-  # (The build process attempted to copy file a overwriting file b, where a and
-  # b are hard-linked, which results in cp returning a non-zero exit code.)
-  # https://github.com/NixOS/nixpkgs/issues/4266
-  postUnpack = ''rm "$sourceRoot/enc/unicode/name2ctype.h"'';
-
   patches = ops useRailsExpress [
-    "${patchSet}/patches/ruby/2.0.0/p481/01-zero-broken-tests.patch"
-    "${patchSet}/patches/ruby/2.0.0/p481/02-railsexpress-gc.patch"
-    "${patchSet}/patches/ruby/2.0.0/p481/03-display-more-detailed-stack-trace.patch"
-    "${patchSet}/patches/ruby/2.0.0/p481/04-show-full-backtrace-on-stack-overflow.patch"
-    "${patchSet}/patches/ruby/2.0.0/p481/05-fix-missing-c-return-event.patch"
+    "${patchSet}/patches/ruby/2.0.0/p481/railsexpress/01-zero-broken-tests.patch"
+    "${patchSet}/patches/ruby/2.0.0/p481/railsexpress/02-railsexpress-gc.patch"
+    "${patchSet}/patches/ruby/2.0.0/p481/railsexpress/03-display-more-detailed-stack-trace.patch"
+    "${patchSet}/patches/ruby/2.0.0/p481/railsexpress/04-show-full-backtrace-on-stack-overflow.patch"
+    "${patchSet}/patches/ruby/2.0.0/p481/railsexpress/05-fix-missing-c-return-event.patch"
   ];
 
   configureFlags = ["--enable-shared" ]

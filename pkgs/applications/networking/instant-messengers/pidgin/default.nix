@@ -12,11 +12,12 @@
 
 stdenv.mkDerivation rec {
   name = "pidgin-${version}";
-  version = "2.10.10";
+  majorVersion = "2";
+  version = "${majorVersion}.10.11";
 
   src = fetchurl {
     url = "mirror://sourceforge/pidgin/${name}.tar.bz2";
-    sha256 = "0bc2bk2g3w90mpz9sn9j95c71z4i2i3wxaqa2zpmmixf5r8rasyw";
+    sha256 = "01s0q30qrjlzj7kkz6f8lvrwsdd55a9yjh2xjjwyyxzw849j3bpj";
   };
 
   inherit nss ncurses;
@@ -50,6 +51,8 @@ stdenv.mkDerivation rec {
     "--disable-tcl"
   ]
   ++ (lib.optionals (gnutls != null) ["--enable-gnutls=yes" "--enable-nss=no"]);
+
+  enableParallelBuilding = true;
 
   meta = with stdenv.lib; {
     description = "Multi-protocol instant messaging client";

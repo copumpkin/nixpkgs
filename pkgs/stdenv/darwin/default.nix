@@ -142,12 +142,14 @@ in rec {
     } // { libc = bootstrapTools; };
 
     extraPreHook = bootstrapPreHook;
+    overrides    = pkgs: { binutils = bootstrapTools; };
   };
 
   stage2 = stageFun {
     inherit (stage1.stdenv) cc;
     extraPath    = [ stage1.pkgs.xz ];
     extraPreHook = bootstrapPreHook;
+    overrides    = pkgs: { binutils = stage1.pkgs.binutils; };
   };
 
   stage3 = with stage2; stageFun {
@@ -168,6 +170,7 @@ in rec {
       export NIX_LDFLAGS_BEFORE+=" -L${pkgs.darwin.libSystem}/lib/"
       export LD_DYLD_PATH=${pkgs.darwin.dyld}/lib/dyld
     '';
+    overrides = pkgs: { binutils = stage2.pkgs.binutils; };
   };
 
   stage4 = with stage3; import ../generic rec {
@@ -204,7 +207,8 @@ in rec {
 
     overrides = pkgs: {
       clang = cc;
-      inherit (pkgs)
+      inherit cc;
+      inherit (stage3.pkgs)
         gzip bzip2 xz bash binutils coreutils diffutils findutils gawk
         glibc gnumake gnused gnutar gnugrep gnupatch patchelf
         attr acl paxctl zlib;

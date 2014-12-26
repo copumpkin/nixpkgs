@@ -9,7 +9,7 @@ stdenv.mkDerivation rec {
     sha256 = "01zgmbk67lwl3xg41pn2ykrs3va2drwjicbvfa49kpmwzf8saf2x";
   };
 
-  phases = [ "unpackPhase" "installPhase" ];
+  phases = [ "unpackPhase" "installPhase" "fixupPhase" ];
 
   buildInputs = [ launchd ];
 
@@ -18,11 +18,18 @@ stdenv.mkDerivation rec {
   installPhase = ''
     mkdir -p $out/include
     cp dnsinfo/*.h $out/include/
-    mkdir -p $out/System/Library/Frameworks/SystemConfiguration.framework/Headers
-    cp SystemConfiguration.fproj/*.h $out/System/Library/Frameworks/SystemConfiguration.framework/Headers/
-    mkdir -p $out/nix-support
-    cat >$out/nix-support/setup-hook <<EOF
-    export NIX_CFLAGS_COMPILE+=" -F$out/System/Library/Frameworks"
-    EOF
+
+    ###### IMPURITIES
+
+    mkdir -p $out/Library/Frameworks/SystemConfiguration.framework
+    pushd $out/Library/Frameworks/SystemConfiguration.framework
+    ln -s /System/Library/Frameworks/SystemConfiguration.framework/Versions/A/SystemConfiguration
+    ln -s /System/Library/Frameworks/SystemConfiguration.framework/Versions/A/Resources
+    popd
+
+    ###### HEADERS
+
+    mkdir -p $out/Library/Frameworks/SystemConfiguration.framework/Headers
+    cp SystemConfiguration.fproj/*.h $out/Library/Frameworks/SystemConfiguration.framework/Headers/
   '';
 }

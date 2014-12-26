@@ -1,4 +1,5 @@
-{ stdenv, fetchurl, cmake, freetype, libpng, mesa, gettext, openssl, qt4, perl, libiconv }:
+{ stdenv, fetchurl, cmake, freetype, libpng, mesa, gettext, openssl, qt4, perl
+, libiconv }:
 
 stdenv.mkDerivation rec {
   name = "stellarium-0.12.4";

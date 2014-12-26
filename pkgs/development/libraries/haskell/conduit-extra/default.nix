@@ -7,8 +7,8 @@
 
 cabal.mkDerivation (self: {
   pname = "conduit-extra";
-  version = "1.1.4.1";
-  sha256 = "18q2d9ga49gldw4i8a5vnncsr712b21ik0160gdw3czqilvf8nbr";
+  version = "1.1.5";
+  sha256 = "1i38n3pdibjpi9kg37wvv4m6krfbsdd4baik804ss2ml1ry7gm4p";
   buildDepends = [
     attoparsec blazeBuilder conduit filepath monadControl network
     primitive resourcet stm streamingCommons text transformers
