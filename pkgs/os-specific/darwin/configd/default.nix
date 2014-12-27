@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, launchd, Security }:
+{ stdenv, fetchurl, launchd, security }:
 
 stdenv.mkDerivation rec {
   version = "596.15";
@@ -13,7 +13,7 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ launchd ];
 
-  propagatedBuildInputs = [ Security ];
+  propagatedBuildInputs = [ security ];
 
   installPhase = ''
     mkdir -p $out/include

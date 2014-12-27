@@ -8011,20 +8011,20 @@ let
     architecture     = callPackage ../os-specific/darwin/architecture {};
     libunwind        = callPackage ../os-specific/darwin/libunwind { inherit dyld; };
     carbon-headers   = callPackage ../os-specific/darwin/carbon-headers {};
-    CommonCrypto     = callPackage ../os-specific/darwin/CommonCrypto {};
+    commonCrypto     = callPackage ../os-specific/darwin/CommonCrypto {};
     copyfile         = callPackage ../os-specific/darwin/copyfile {};
     removefile       = callPackage ../os-specific/darwin/removefile {};
-    configd          = callPackage ../os-specific/darwin/configd { inherit launchd Security; };
+    configd          = callPackage ../os-specific/darwin/configd { inherit launchd security; };
     libnotify        = callPackage ../os-specific/darwin/libnotify {};
     mDNSResponder    = callPackage ../os-specific/darwin/mDNSResponder {};
     libresolv        = callPackage ../os-specific/darwin/libresolv { inherit libinfo configd libnotify mDNSResponder; };
     libauto          = callPackage ../os-specific/darwin/libauto {};
     iokit            = callPackage ../os-specific/darwin/iokit { inherit xnu; };
-    Security         = callPackage ../os-specific/darwin/Security {};
+    security         = callPackage ../os-specific/darwin/Security {};
 
     libSystem        = callPackage ../os-specific/darwin/libSystem {
       inherit bootstrap_cmds xnu libc libm libdispatch cctools libinfo dyld csu architecture;
-      inherit libclosure carbon-headers CommonCrypto copyfile removefile libresolv libnotify;
+      inherit libclosure carbon-headers commonCrypto copyfile removefile libresolv libnotify;
     };
 
     # We only have headers for these for now

@@ -1,0 +1,78 @@
+(version 1)
+(deny default)
+
+(allow file-read*
+       (literal "/dev/random")
+       (literal "/dev/urandom")
+       (subpath "/usr/share/locale"))
+
+(allow file-read* file-write-data
+       (literal "/dev/null")
+       (literal "/dev/zero"))
+
+(allow file-read*
+       (literal "/") ; pwd complains if it can't read parents
+       (literal "/private")
+       (literal "/private/var"))
+
+(allow file-read-metadata
+       (literal "/var")
+       (literal "/tmp"))
+
+(allow file-read* file-write* process-exec
+       (subpath "/private/var/folders")
+       (subpath "/private/tmp"))
+
+; libSystem and its transitive dependencies
+(allow file-read*
+       (literal "/usr/lib/libSystem.dylib")
+       (literal "/usr/lib/libSystem.B.dylib")
+       (literal "/usr/lib/libobjc.A.dylib")
+       (literal "/usr/lib/libauto.dylib")
+       (literal "/usr/lib/libc++abi.dylib")
+       (literal "/usr/lib/libc++.1.dylib")
+       (literal "/usr/lib/libDiagnosticMessagesClient.dylib")
+       (subpath "/usr/lib/system"))
+
+; SystemConfiguration.framework (needed for python's mysterious _scproxy and others)
+(allow file-read*
+       (subpath "/System/Library/Frameworks/SystemConfiguration.framework/Versions/A")
+       (subpath "/System/Library/Frameworks/CoreFoundation.framework/Versions/A")
+       (literal "/usr/lib/libbsm.0.dylib")
+       (literal "/usr/lib/libicucore.A.dylib")
+       (literal "/usr/lib/libz.1.dylib") ; symlink to the below (might change on 10.10)
+       (literal "/usr/lib/libz.1.2.5.dylib"))
+
+; Everything in /nix is fair game (we can tighten this with knowledge of buildInputs eventually)
+(allow file-read* file-write* process-exec (subpath "/nix"))
+
+; Nix needs to see the metadata for these to determine that nix.conf isn't there
+(allow file-read-metadata
+       (literal "/etc")
+       (literal "/etc/nix")
+       (literal "/etc/nix/nix.conf"))
+
+; TODO: get rid of this obviously
+(allow file-read*  (subpath "/Users/copumpkin"))
+(allow file-write* (subpath "/Users/copumpkin"))
+
+(allow process-fork)
+
+; Needed for basic discovery of system configuration
+(allow sysctl-read)
+
+; We can send signals to other programs in the sandbox
+(allow signal (target same-sandbox))
+
+; Even NixOS has a /bin/sh and a /usr/bin/env
+(allow process-exec
+       (literal "/bin/sh")
+       (literal "/usr/bin/env"))
+
+; /bin/sh uses this (we could make it a symlink into our store?)
+(allow file-read* (literal "/usr/lib/libncurses.5.4.dylib"))
+
+; Only necessary if you need to talk to the net
+(allow network-outbound
+       (literal "/private/var/run/mDNSResponder")
+       (remote tcp))
