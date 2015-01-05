@@ -29,6 +29,7 @@
        (literal "/usr/lib/libSystem.dylib")
        (literal "/usr/lib/libSystem.B.dylib")
        (literal "/usr/lib/libobjc.A.dylib")
+       (literal "/usr/lib/libobjc.dylib")
        (literal "/usr/lib/libauto.dylib")
        (literal "/usr/lib/libc++abi.dylib")
        (literal "/usr/lib/libc++.1.dylib")
@@ -44,7 +45,7 @@
        (literal "/etc/nix")
        (literal "/etc/nix/nix.conf"))
 
-; TODO: get rid of this obviously
+; Does this need write?
 (allow file-read* file-write* (subpath (param "_HOME")))
 
 (allow process-fork)
@@ -67,3 +68,8 @@
 (allow network-outbound
        (literal "/private/var/run/mDNSResponder")
        (remote tcp))
+
+; Needed for getpwuid (used by git and thus fetchgit)
+(allow mach-lookup
+       (global-name "com.apple.system.notification_center")
+       (global-name "com.apple.system.opendirectoryd.libinfo"))
