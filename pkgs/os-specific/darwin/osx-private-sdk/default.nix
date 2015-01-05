@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, python, osx_sdk }:
+{ stdenv, fetchFromGitHub, python, rsync, osx_sdk }:
 
 let
   sdkVersion = "10.9";
@@ -12,17 +12,14 @@ in stdenv.mkDerivation {
     sha256 = "1vj3fxwp32irxjk987p7a223sm5bl5rrlajcvgy69k0wb0fp0krc";
   };
 
-  buildInputs = [ python ];
+  buildInputs = [ python rsync ];
 
   configurePhase = "true";
-
-  buildPhase = ''
-    python PrivateSDK.py -i ${osx_sdk}/Developer/SDKs/MacOSX${sdkVersion}.sdk -o PrivateMacOSX${sdkVersion}.sdk
-  '';
+  buildPhase = "true";
 
   installPhase = ''
-    mkdir -p $out/Developer/SDKs/
-    mv PrivateMacOSX${sdkVersion}.sdk $out/Developer/SDKs
+    rsync -av ${osx_sdk}/Developer/SDKs/MacOSX${sdkVersion}.sdk/ $out
+    rsync -av ./ $out
   '';
 
   meta = with stdenv.lib; {

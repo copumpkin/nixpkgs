@@ -64,6 +64,8 @@
 ; /bin/sh uses this (we could make it a symlink into our store?)
 (allow file-read* (literal "/usr/lib/libncurses.5.4.dylib"))
 
+(allow file-read* (subpath "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk"))
+
 ; Only necessary if you need to talk to the net
 (allow network-outbound
        (literal "/private/var/run/mDNSResponder")

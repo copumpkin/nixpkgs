@@ -87,6 +87,9 @@ rec {
 
       cp -rd ${pkgs.darwin.corefoundation}/Library $out
 
+      mkdir $out/SDK
+      cp -rd ${pkgs.darwin.osx_private_sdk}/* $out/SDK
+
       chmod -R u+w $out
 
       nuke-refs $out/bin/*
