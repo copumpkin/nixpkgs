@@ -7,8 +7,8 @@
 
 cabal.mkDerivation (self: {
   pname = "liquid-fixpoint";
-  version = "0.2.0.0";
-  sha256 = "1shrkc9j15a0004s8jhnza755h82yk3hffjkzkqpgwg54c2l2x6y";
+  version = "0.2.1.0";
+  sha256 = "11l9750ldxcb5jq34dl0iggpi9dh1zwjnlzgmwg4qvsgcq8cakdf";
   isLibrary = true;
   isExecutable = true;
   buildDepends = [

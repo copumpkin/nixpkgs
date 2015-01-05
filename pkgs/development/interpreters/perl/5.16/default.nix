@@ -51,8 +51,6 @@ stdenv.mkDerivation rec {
     ]
     ++ lib.optional enableThreading "-Dusethreads";
 
-  isAnAncientPoS=1;
-
   configureScript = "${stdenv.shell} ./Configure";
 
   dontAddPrefix = true;

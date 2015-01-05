@@ -22,6 +22,7 @@ rec {
       # C standard library stuff
       cp -d ${darwin.libSystem}/lib/*.o $out/lib/
       cp -d ${darwin.libSystem}/lib/*.dylib $out/lib/
+      cp -d ${darwin.libSystem}/lib/system/*.dylib $out/lib/
 
       # Resolv is actually a link to another package, so let's copy it properly
       rm $out/lib/libresolv.9.dylib
@@ -43,7 +44,7 @@ rec {
       cp ${findutils}/bin/xargs $out/bin
       cp -d ${diffutils}/bin/* $out/bin
       cp -d ${gnused}/bin/* $out/bin
-      cp -d ${gnugrep}/bin/* $out/bin
+      cp -d ${gnugrep}/bin/grep $out/bin
       cp ${gawk}/bin/gawk $out/bin
       cp -d ${gawk}/bin/awk $out/bin
       cp ${gnutar}/bin/tar $out/bin
@@ -84,7 +85,7 @@ rec {
         cp ${darwin.cctools}/bin/$i $out/bin
       done
 
-      cp -rd ${pkgs.darwin.corefoundation}/System $out
+      cp -rd ${pkgs.darwin.corefoundation}/Library $out
 
       mkdir $out/SDK
       cp -rd ${pkgs.darwin.osx_private_sdk}/* $out/SDK
@@ -115,7 +116,7 @@ rec {
         fi
       done
 
-      for i in $out/bin/* $out/lib/*.dylib $out/lib/clang/3.5.0/lib/darwin/*.dylib $out/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation; do
+      for i in $out/bin/* $out/lib/*.dylib $out/lib/clang/3.5.0/lib/darwin/*.dylib $out/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation; do
         if test -x $i -a ! -L $i; then
           echo "Adding rpath to $i"
           rpathify $i
@@ -124,7 +125,7 @@ rec {
 
       nuke-refs $out/lib/*
       nuke-refs $out/lib/clang/3.5.0/lib/darwin/*
-      nuke-refs $out/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation
+      nuke-refs $out/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation
 
       mkdir $out/.pack
       mv $out/* $out/.pack
@@ -170,8 +171,49 @@ rec {
   unpack = stdenv.mkDerivation {
     name = "unpack";
 
-    builder = stdenv.shell;
-    args    = [ ./unpack-bootstrap-tools.sh ];
+    # This is by necessity a near-duplicate of unpack-bootstrap-tools.sh. If we refer to it directly,
+    # we can't make any changes to it due to our testing stdenv depending on it. Think of this as the
+    # unpack-bootstrap-tools.sh for the next round of bootstrap tools.
+    # TODO: think through alternate designs, such as hosting this script as an output of the process.
+    buildCommand = ''
+      # Unpack the bootstrap tools tarball.
+      echo Unpacking the bootstrap tools...
+      $mkdir $out
+      $bzip2 -d < $tarball | (cd $out && $cpio -i)
+
+      # Set the ELF interpreter / RPATH in the bootstrap binaries.
+      echo Patching the tools...
+
+      export PATH=$out/bin
+
+      for i in $out/bin/*; do
+        if ! test -L $i; then
+          echo patching $i
+          install_name_tool -add_rpath $out/lib $i || true
+        fi
+      done
+
+      for i in $out/lib/*.dylib $out/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation; do
+        if ! test -L $i; then
+          echo patching $i
+
+          id=$(otool -D "$i" | tail -n 1)
+          install_name_tool -id "$(dirname $i)/$(basename $id)" $i
+
+          libs=$(otool -L "$i" | tail -n +2 | grep -v libSystem | cat)
+          if [ -n "$libs" ]; then
+            install_name_tool -add_rpath $out/lib $i
+          fi
+        fi
+      done
+
+      ln -s bash $out/bin/sh
+      ln -s bzip2 $out/bin/bunzip2
+
+      cat >$out/bin/dsymutil << EOF
+      #!$out/bin/sh
+      EOF
+    '';
 
     tarball = "${build}/on-server/bootstrap-tools.cpio.bz2";
 
@@ -181,7 +223,6 @@ rec {
 
     allowedReferences = [ "out" ];
   };
-
 
   test = stdenv.mkDerivation {
     name = "test";
@@ -218,6 +259,11 @@ rec {
       echo 'int main() { printf("Hello World\n"); return 0; }' >> foo.c
       $CC -o $out/bin/foo foo.c
       $out/bin/foo
+
+      echo '#include <CoreFoundation/CoreFoundation.h>' >> bar.c
+      echo 'int main() { CFShow(CFSTR("Hullo")); return 0; }' >> bar.c
+      $CC -F${unpack}/Library/Frameworks -framework CoreFoundation -o $out/bin/bar bar.c
+      $out/bin/bar
 
       echo '#include <iostream>' >> bar.cc
       echo 'int main() { std::cout << "Hello World\n"; }' >> bar.cc

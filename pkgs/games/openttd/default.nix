@@ -17,6 +17,12 @@ stdenv.mkDerivation rec {
     "--without-liblzo2"
   ];
 
+  # NOTE: Remove this patch in 1.4.5 or greater
+  patches = [
+    # Adapted from svn r27079
+    ./fix-freetype-1.4.4.patch
+  ];
+
   makeFlags = "INSTALL_PERSONAL_DIR=";
 
   postInstall = ''
@@ -32,7 +38,7 @@ stdenv.mkDerivation rec {
 
       In multiplayer networked mode, players may:
         - play competitively as different businesses
-        - play cooperatively controling the same business
+        - play cooperatively controlling the same business
         - observe as spectators
     '';
     homepage = http://www.openttd.org/;

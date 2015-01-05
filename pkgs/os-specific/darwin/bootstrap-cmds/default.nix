@@ -46,6 +46,7 @@ stdenv.mkDerivation rec {
     substituteInPlace $out/bin/mig \
       --replace 'arch=`/usr/bin/arch`' 'arch=i386' \
       --replace '/usr/bin/' "" \
-      --replace '/bin/rmdir' "rmdir"
+      --replace '/bin/rmdir' "rmdir" \
+      --replace 'C=''${MIGCC}' "C=cc"
   '';
 }

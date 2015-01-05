@@ -6,7 +6,7 @@ stdenv.mkDerivation rec {
 
   src = fetchgit {
     inherit rev;
-    url = "https://github.com/jd/offlineimap.el";
+    url = "git://git.naquadah.org/offlineimap-el.git";
     sha256 = "0az4llfgva4wvpljyc5s2m7ggfnj06ssp32x8bncr5fzksha3r7b";
   };
 

@@ -100,8 +100,6 @@ assert !enableStaticLibraries -> versionOlder "7.7" ghc.version;
               inherit (self) sha256;
             };
 
-            isAnAncientPoS=1;
-
             # default buildInputs are just ghc, if more buildInputs are required
             # buildInputs can be extended by the client by using extraBuildInputs,
             # but often propagatedBuildInputs is preferable anyway

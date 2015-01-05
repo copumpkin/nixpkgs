@@ -12,25 +12,10 @@ let
   };
 
   bootstrapFiles = {
-    sh = fetch {
-      file = "sh";
-      sha256 = "04nih9q70z5zjyd2cbp3a5np9d1fhzh9ll7w1lkz9li2rvl2kp9z";
-    };
-
-    bzip2 = fetch {
-      file = "bzip2";
-      sha256 = "0xrv0p2gv0vsgm339pnxwqcl1i5bil8xc5jh82q2d6jrzyfyc45n";
-    };
-
-    mkdir = fetch {
-      file = "mkdir";
-      sha256 = "1dwjxh13mxld42dfnqwqck55hhqy9si0rj2fwnyqnz0sxrip21kb";
-    };
-
-    cpio = fetch {
-      file = "cpio";
-      sha256 = "0g8kcr3i0bk1ch4ffy0pppb0nha25qr81ls3bicaig8r9y6dg91m";
-    };
+    sh    = fetch { file = "sh";    sha256 = "1amnaql1rc6fdsxyav7hmhj8ylf4ccmgsl7v23x4sgw94pkipz78"; };
+    bzip2 = fetch { file = "bzip2"; sha256 = "1f4npmrhx37jnv90by8b39727cam3n811lvglsc6da9xm80g2f5l"; };
+    mkdir = fetch { file = "mkdir"; sha256 = "0x9jqf4rmkykbpkybp40x4d0v0dq99i0r5yk8096mjn1m7s7xa0p"; };
+    cpio  = fetch { file = "cpio";  sha256 = "1a5s8bs14jhhmgrf4cwn92iq8sbz40qhjzj7y35ri84prp9clkc3"; };
   };
 in rec {
   allPackages = import ../../top-level/all-packages.nix;
@@ -42,24 +27,10 @@ in rec {
     export NIX_NO_SELF_RPATH=1
     stripAllFlags=" " # the Darwin "strip" command doesn't know "-s"
     xargsFlags=" "
-    export MACOSX_DEPLOYMENT_TARGET=10.7
+    export MACOSX_DEPLOYMENT_TARGET=10.8
     export SDKROOT=
     export CMAKE_OSX_ARCHITECTURES=x86_64
     export NIX_CFLAGS_COMPILE+=" --sysroot=/var/empty -Wno-multichar -Wno-deprecated-declarations"
-    if [ ! -n "$isAnAncientPoS" ]; then
-      export configureFlags+=" ac_cv_func_fchmodat=no"
-      export configureFlags+=" ac_cv_func_fchownat=no"
-      export configureFlags+=" ac_cv_func_fdopendir=no"
-      export configureFlags+=" ac_cv_func_fstatat=no"
-      export configureFlags+=" ac_cv_func_mkdirat=no"
-      export configureFlags+=" ac_cv_func_openat=no"
-      export configureFlags+=" ac_cv_func_unlinkat=no"
-      export configureFlags+=" ac_cv_func_faccessat=no"
-      export configureFlags+=" ac_cv_func_linkat=no"
-      export configureFlags+=" ac_cv_func_readlinkat=no"
-      export configureFlags+=" ac_cv_func_renameat=no"
-      export configureFlags+=" ac_cv_func_symlinkat=no"
-    fi
   '';
 
   bootstrapTools = derivation {
@@ -69,10 +40,7 @@ in rec {
 
     args = [ ./unpack-bootstrap-tools.sh ];
 
-    tarball = import <nix/fetchurl.nix> {
-      url    = "https://www.dropbox.com/s/8in9rygtd24kimx/bootstrap-tools.4.cpio.bz2";
-      sha256 = "02n7njrnnkfrklcjl3fhjf46h19cmva6xi74cqi826yd8c59kgz5";
-    };
+    tarball = fetch { file = "bootstrap-tools.5.cpio.bz2"; sha256 = "0j06zlhfcphxlz3s7wmcqc7jlaykwqi06caw6fjb479k0ikxhj7l"; };
 
     inherit system;
 
@@ -85,7 +53,7 @@ in rec {
   };
 
   bootstrapPreHook = ''
-    export NIX_CFLAGS_COMPILE+=" -idirafter ${bootstrapTools}/include-libSystem -F${bootstrapTools}/System/Library/Frameworks"
+    export NIX_CFLAGS_COMPILE+=" -idirafter ${bootstrapTools}/include-libSystem -F${bootstrapTools}/Library/Frameworks"
     export NIX_LDFLAGS_BEFORE+=" -L${bootstrapTools}/lib/"
     export LD_DYLD_PATH=${bootstrapTools}/lib/dyld
   '';
@@ -166,7 +134,7 @@ in rec {
 
     extraPath    = [ pkgs.xz ];
     extraPreHook = ''
-      export NIX_CFLAGS_COMPILE+=" -idirafter ${pkgs.darwin.libSystem}/include -F${pkgs.darwin.corefoundation}/System/Library/Frameworks"
+      export NIX_CFLAGS_COMPILE+=" -idirafter ${pkgs.darwin.libSystem}/include -F${pkgs.darwin.corefoundation}/Library/Frameworks"
       export NIX_LDFLAGS_BEFORE+=" -L${pkgs.darwin.libSystem}/lib/"
       export LD_DYLD_PATH=${pkgs.darwin.dyld}/lib/dyld
     '';
@@ -178,7 +146,7 @@ in rec {
 
     preHook = ''
       ${commonPreHook}
-      export NIX_CFLAGS_COMPILE+=" -idirafter ${pkgs.darwin.libSystem}/include -F${pkgs.darwin.corefoundation}/System/Library/Frameworks"
+      export NIX_CFLAGS_COMPILE+=" -idirafter ${pkgs.darwin.libSystem}/include -F${pkgs.darwin.corefoundation}/Library/Frameworks"
       export NIX_LDFLAGS_BEFORE+=" -L${pkgs.darwin.libSystem}/lib/"
       export LD_DYLD_PATH=${pkgs.darwin.dyld}/lib/dyld
     '';

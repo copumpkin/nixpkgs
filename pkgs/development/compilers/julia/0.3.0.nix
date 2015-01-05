@@ -7,7 +7,7 @@
 assert stdenv.isLinux; 
 
 let
-  realGcc = stdenv.cc.gcc;
+  realGcc = stdenv.gcc.gcc;
 in
 stdenv.mkDerivation rec {
   pname = "julia";

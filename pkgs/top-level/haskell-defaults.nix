@@ -15,19 +15,31 @@
   # Older compilers inherit the overrides from newer ones.
 
   ghcHEADPrefs = self : super : super // {
-    cabalInstall_1_20_0_4 = super.cabalInstall_1_20_0_4.override { Cabal = null; };
+    cabalInstall_1_20_0_6 = super.cabalInstall_1_20_0_6.override { Cabal = null; };
     mtl = self.mtl_2_2_1;
-    transformersCompat = super.transformersCompat_0_3_3;
+    ghcjsBase = null;
+    ghcjsDom = with self; super.ghcjsDom.override {
+      cabal = self.cabal.override {
+        extension = self: super: {
+          configureFlags = [ "-f-ghcjs" "-fwebkit" "-f-gtk3" ];
+          buildDepends = [ mtl glib transformers gtk webkit ];
+        };
+      };
+    };
   };
 
-  ghc783Prefs = self : super : ghcHEADPrefs self super // {
-    cabalInstall_1_20_0_4 = super.cabalInstall_1_20_0_4.override { Cabal = self.Cabal_1_20_0_2; };
-    codex = super.codex.override { hackageDb = super.hackageDb.override { Cabal = self.Cabal_1_20_0_2; }; };
+  ghc784Prefs = self : super : ghcHEADPrefs self super // {
+    cabalInstall_1_20_0_6 = super.cabalInstall_1_20_0_6.override { Cabal = self.Cabal_1_20_0_3; };
+    codex = super.codex.override { hackageDb = super.hackageDb.override { Cabal = self.Cabal_1_20_0_3; }; };
+    jailbreakCabal = super.jailbreakCabal.override { Cabal = self.Cabal_1_20_0_3; };
     MonadRandom = self.MonadRandom_0_2_0_1; # newer versions require transformers >= 0.4.x
     mtl = self.mtl_2_1_3_1;
+    transformersCompat = super.transformersCompat.override { cabal = self.cabal.override {
+      extension = self: super: { configureFlags = "-fthree " + super.configureFlags or ""; };
+    }; };
   };
 
-  ghc763Prefs = self : super : ghc783Prefs self super // {
+  ghc763Prefs = self : super : ghc784Prefs self super // {
     aeson = self.aeson_0_7_0_4;
     ariadne = super.ariadne.override {
       haskellNames = self.haskellNames.override {
@@ -81,7 +93,6 @@
     binary = self.binary_0_7_2_2;       # core package in ghc >= 7.2.2
     caseInsensitive = super.caseInsensitive; # undo the override from ghc 7.2.2
     HsSyck = self.HsSyck_0_51;
-    jailbreakCabal = super.jailbreakCabal.override { Cabal = self.Cabal_1_16_0_3; };
     random = null;                      # core package in ghc <= 7.0.x
   };
 
@@ -94,6 +105,7 @@
     deepseq = self.deepseq_1_2_0_1;
     dlist = super.dlist.override { cabal = self.cabal.override { Cabal = self.Cabal_1_16_0_3; }; };
     exceptions = null;                  # none of our versions compile
+    jailbreakCabal = super.jailbreakCabal.override { Cabal = self.Cabal_1_16_0_3; };
     logict = super.logict.override { cabal = self.cabal.override { Cabal = self.Cabal_1_16_0_3; }; };
     monadPar = self.monadPar_0_1_0_3;
     nats = null;                        # none of our versions compile
@@ -223,11 +235,94 @@
                };
              };
 
-  packages_ghc783 =
-    packages { ghcPath = ../development/compilers/ghc/7.8.3.nix;
+  packages_ghc784 =
+    packages { ghcPath = ../development/compilers/ghc/7.8.4.nix;
                ghcBinary = if stdenv.isDarwin then ghc783Binary else ghc742Binary;
-               prefFun = ghc783Prefs;
+               prefFun = ghc784Prefs;
              };
+
+  packages_ghcjs =
+    packages {
+      ghcPath = ../development/compilers/ghc/7.8.4.nix;
+      ghcBinary = if stdenv.isDarwin then ghc783Binary else ghc742Binary;
+      prefFun = self : super : super // {
+        ghc = let parent = packages_ghc784; in
+          callPackage ../development/compilers/ghcjs/wrapper.nix {
+            ghc = parent.ghcjs // { inherit parent; };
+          };
+        cabal = self.cabalJs;
+        buildLocalCabalWithArgs = args: super.buildLocalCabalWithArgs (args // {
+          nativePkgs = packages_ghc784;
+        });
+        ghcjsDom = with self; super.ghcjsDom.override {
+          cabal = self.cabal.override {
+            extension = self: super: {
+              configureFlags = [ ];
+              buildDepends = [ mtl ghcjsBase ];
+            };
+          };
+        };
+        # This is the list of packages that are built into a booted ghcjs installation
+        # It can be generated with the command:
+        # nix-shell '<nixpkgs>' -A pkgs.haskellPackages_ghcjs.ghc --command "ghcjs-pkg list | sed -n 's/^    \(.*\)-\([0-9.]*\)$/\1_\2/ p' | sed 's/\./_/g' | sed 's/-\(.\)/\U\1/' | sed 's/^\([^_]*\)\(.*\)$/\1 = null;/'"
+        Cabal = null;
+        aeson = null;
+        array = null;
+        async = null;
+        attoparsec = null;
+        base = null;
+        binary = null;
+        rts = null;
+        bytestring = null;
+        caseInsensitive = null;
+        containers = null;
+        deepseq = null;
+        directory = null;
+        dlist = null;
+        extensibleExceptions = null;
+        filepath = null;
+        ghcPrim = null;
+        ghcjsBase = null;
+        ghcjsPrim = null;
+        hashable = null;
+        integerGmp = null;
+        mtl = null;
+        oldLocale = null;
+        oldTime = null;
+        parallel = null;
+        pretty = null;
+        primitive = null;
+        process = null;
+        scientific = null;
+        stm = null;
+        syb = null;
+        templateHaskell = null;
+        text = null;
+        time = null;
+        transformers = null;
+        unix = null;
+        unorderedContainers = null;
+        vector = null;
+
+        # GHCJS-specific workarounds
+        split = super.split.override {
+          cabal = self.cabal.override {
+            extension = self: super: {
+              doCheck = false; # Under ghcjs, the tests hang
+            };
+          };
+        };
+        dependentMap = super.dependentMap.override {
+          cabal = self.cabal.override {
+            extension = self: super: {
+              preConfigure = ''
+                sed -i 's/^.*ghc-options:.*$//' *.cabal
+              ''; # Without this, we get "target ‘base’ is not a module name or a source file"
+            };
+          };
+        };
+      };
+    };
 
   packages_ghc763 =
     packages { ghcPath = ../development/compilers/ghc/7.6.3.nix;

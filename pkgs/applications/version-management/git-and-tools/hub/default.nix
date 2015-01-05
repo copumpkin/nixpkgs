@@ -16,7 +16,7 @@ stdenv.mkDerivation rec {
   '';
 
   fixupPhase = ''
-    wrapProgram $out/bin/hub --prefix PATH : ${groff}/bin --prefix PATH : ${git}/bin
+    wrapProgram $out/bin/hub --prefix PATH : ${groff}/bin:${git}/bin
   '';
 
   meta = {

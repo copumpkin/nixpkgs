@@ -5,8 +5,8 @@ stdenv.mkDerivation {
   name = "coq-containers-${coq.coq-version}";
 
   src = fetchurl {
-    url = http://www.lix.polytechnique.fr/coq/pylons/contribs/files/Containers/v8.4/Containers.tar.gz;
-    sha256 = "1rk7xvplg8x40bs42w4ar196zk8fp9kaddsbzsgjmdkmdgw5zfqx";
+    url = http://coq.inria.fr/pylons/contribs/files/Containers/v8.4/Containers.tar.gz;
+    sha256 = "0z7yk0g7zkniwc73ka7wwb5jjg5a2wr1krrn3akr7kn5z3gvy2mc";
   };
 
   buildInputs = [ coq.ocaml coq.camlp5 ];

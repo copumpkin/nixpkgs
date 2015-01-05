@@ -8,7 +8,8 @@
 
 (allow file-read* file-write-data
        (literal "/dev/null")
-       (literal "/dev/zero"))
+       (literal "/dev/zero")
+       (literal "/dev/tty"))
 
 (allow file-read*
        (literal "/") ; pwd complains if it can't read parents
@@ -34,15 +35,6 @@
        (literal "/usr/lib/libDiagnosticMessagesClient.dylib")
        (subpath "/usr/lib/system"))
 
-; SystemConfiguration.framework (needed for python's mysterious _scproxy and others)
-(allow file-read*
-       (subpath "/System/Library/Frameworks/SystemConfiguration.framework/Versions/A")
-       (subpath "/System/Library/Frameworks/CoreFoundation.framework/Versions/A")
-       (literal "/usr/lib/libbsm.0.dylib")
-       (literal "/usr/lib/libicucore.A.dylib")
-       (literal "/usr/lib/libz.1.dylib") ; symlink to the below (might change on 10.10)
-       (literal "/usr/lib/libz.1.2.5.dylib"))
-
 ; Everything in /nix is fair game (we can tighten this with knowledge of buildInputs eventually)
 (allow file-read* file-write* process-exec (subpath "/nix"))
 
@@ -53,8 +45,7 @@
        (literal "/etc/nix/nix.conf"))
 
 ; TODO: get rid of this obviously
-(allow file-read*  (subpath "/Users/copumpkin"))
-(allow file-write* (subpath "/Users/copumpkin"))
+(allow file-read* file-write* (subpath (param "_HOME")))
 
 (allow process-fork)
 

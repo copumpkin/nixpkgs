@@ -111,7 +111,7 @@ in stdenv.mkDerivation rec {
     cp IOKitUser-907.100.13/IODataQueueClient.h                                $dest
     cp IOKitUser-907.100.13/IOKitLib.h                                         $dest
     cp IOKitUser-907.100.13/iokitmig.h                                         $dest
-    cp ${xnu}/System/Library/Frameworks/IOKit.framework/Versions/A/Headers/*.h $dest
+    cp ${xnu}/Library/PrivateFrameworks/IOKit.framework/Versions/A/Headers/*.h $dest
 
     # audio: complete
     cp IOAudioFamily-197.4.2/IOAudioDefines.h          $dest/audio
@@ -196,7 +196,8 @@ in stdenv.mkDerivation rec {
     # pwr_mgt: complete
     cp IOKitUser-907.100.13/pwr_mgt.subproj/IOPMKeys.h                                 $dest/pwr_mgt
     cp IOKitUser-907.100.13/pwr_mgt.subproj/IOPMLib.h                                  $dest/pwr_mgt
-    cp ${xnu}/System/Library/Frameworks/IOKit.framework/Versions/A/Headers/pwr_mgt/*.h $dest/pwr_mgt
+    cp ${xnu}/Library/PrivateFrameworks/IOKit.framework/Versions/A/Headers/pwr_mgt/*.h $dest/pwr_mgt
+    cp IOKitUser-907.100.13/pwr_mgt.subproj/IOPMLibPrivate.h                           $dest/pwr_mgt # Private
 
     # sbp2: complete
     cp IOFireWireSBP2-426.4.1/IOFireWireSBP2Lib/IOFireWireSBP2Lib.h $dest/sbp2

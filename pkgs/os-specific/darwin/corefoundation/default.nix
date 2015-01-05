@@ -11,7 +11,7 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ dyld icu libdispatch launchd libclosure ];
 
-  patches = [ ./add-cf-initialize.patch ];
+  patches = [ ./add-cf-initialize.patch ./add-cfmachport.patch ];
 
   preBuild = ''
     substituteInPlace Makefile \
@@ -20,8 +20,8 @@ stdenv.mkDerivation rec {
       --replace "/usr/bin/" "" \
       --replace "/usr/sbin/" "" \
       --replace "/bin/" "" \
-      --replace "INSTALLNAME=/System" "INSTALLNAME=$out/System" \
-      --replace "install_name_tool -id /System" "install_name_tool -id $out/System" \
+      --replace "INSTALLNAME=/System" "INSTALLNAME=$out" \
+      --replace "install_name_tool -id /System" "install_name_tool -id $out" \
       --replace "-licucore.A" "-licui18n -licuuc" \
       --replace 'chown -RH -f root:wheel $(DSTBASE)/CoreFoundation.framework' "" \
       --replace 'chmod -RH' 'chmod -R'
@@ -39,7 +39,11 @@ stdenv.mkDerivation rec {
       --replace "CFURLEnumeratorResult" "void *" \
       --replace "CFURLEnumeratorRef" "void *"
 
-
     export DSTROOT=$out
+  '';
+
+  postInstall = ''
+    mv $out/System/* $out
+    rmdir $out/System
   '';
 }

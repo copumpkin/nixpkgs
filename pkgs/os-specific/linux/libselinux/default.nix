@@ -1,4 +1,4 @@
-{ stdenv, fetchgit, pkgconfig, libsepol, pcre
+{ stdenv, fetchurl, pkgconfig, libsepol, pcre
 , enablePython ? false, swig ? null, python ? null
 }:
 
@@ -11,13 +11,10 @@ stdenv.mkDerivation rec {
   version = "2.3";
   inherit (libsepol) se_release se_url;
 
-  src = fetchgit {
-    url = "https://github.com/SELinuxProject/selinux";
-    rev = "refs/tags/libselinux-${version}";
-    sha256 = "0vi2k14gh512b2prnn31l0cg78lmqjqrybdgdyibbhcg2s4v5snb";
+  src = fetchurl {
+    url = "${se_url}/${se_release}/libselinux-${version}.tar.gz";
+    sha256 = "1ckpiv6m5c07rp5vawlhv02w5rq8kc0n95fh2ckq2jnqxi1hn7hb";
   };
-
-  preConfigure = "cd libselinux";
 
   buildInputs = [ pkgconfig libsepol pcre ]
              ++ optionals enablePython [ swig python ];

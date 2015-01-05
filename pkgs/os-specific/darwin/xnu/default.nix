@@ -104,8 +104,10 @@ in stdenv.mkDerivation rec {
     rmdir $out/usr
 
     # TODO: figure out why I need to do this
-    cp libsyscall/wrappers/gethostuuid*.h $out/include
-    cp EXTERNAL_HEADERS/AssertMacros.h    $out/include
+    cp libsyscall/wrappers/*.h $out/include
+    mkdir -p $out/include/os
+    cp libsyscall/os/tsd.h $out/include/os/tsd.h
+    cp EXTERNAL_HEADERS/AssertMacros.h $out/include
 
     # Build the mach headers we crave
     export MIGCC=cc
@@ -114,5 +116,18 @@ in stdenv.mkDerivation rec {
     export DERIVED_SOURCES_DIR=$out/include
     export SDKROOT=$out
     libsyscall/xcodescripts/mach_install_mig.sh
+
+    # Get rid of the System prefix
+    mv $out/System/* $out/
+
+    # Add some symlinks
+    ln -s $out/Library/Frameworks/System.framework/Versions/B \
+          $out/Library/Frameworks/System.framework/Versions/Current
+    ln -s $out/Library/Frameworks/System.framework/Versions/Current/PrivateHeaders \
+          $out/Library/Frameworks/System.framework/Headers
+
+    # IOKit (and possibly the others) is incomplete, so let's not make it visible from here...
+    mkdir $out/Library/PrivateFrameworks
+    mv $out/Library/Frameworks/IOKit.framework $out/Library/PrivateFrameworks
   '';
 }

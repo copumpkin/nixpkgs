@@ -16,21 +16,7 @@ stdenv.mkDerivation rec {
   configureFlags = [ "--with-libsigsegv-prefix=${libsigsegv}" ]
     ++ stdenv.lib.optional readlineSupport "--with-readline=${readline}"
       # only darwin where reported, seems OK on non-chrooted Fedora (don't rebuild stdenv)
-    ++ stdenv.lib.optional (!readlineSupport && stdenv.isDarwin) "--without-readline"
-    ++ stdenv.lib.optionals stdenv.isDarwin [
-         "ac_cv_func_fchmodat=no"
-         "ac_cv_func_fchownat=no"
-         "ac_cv_func_fdopendir=no"
-         "ac_cv_func_fstatat=no"
-         "ac_cv_func_mkdirat=no"
-         "ac_cv_func_openat=no"
-         "ac_cv_func_unlinkat=no"
-         "ac_cv_func_faccessat=no"
-         "ac_cv_func_linkat=no"
-         "ac_cv_func_readlinkat=no"
-         "ac_cv_func_renameat=no"
-         "ac_cv_func_symlinkat=no"
-  ];
+    ++ stdenv.lib.optional (!readlineSupport && stdenv.isDarwin) "--without-readline";
 
   postInstall = "rm $out/bin/gawk-*";
 

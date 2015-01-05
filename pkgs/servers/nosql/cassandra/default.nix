@@ -13,7 +13,7 @@ in stdenv.mkDerivation rec {
   name = "cassandra-${version}";
 
   src = fetchurl {
-    url = "mirror://apache/cassandra/${version}/apache-${name}-bin.tar.gz";
+    url = "http://apache.cs.utah.edu/cassandra/${version}/apache-${name}-bin.tar.gz";
     sha256 = "da99c4ebc8de925dc6b493443b70d2183cf3090b1aad6b6b918efa9565f264dd";
   };
 

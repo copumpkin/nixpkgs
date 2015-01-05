@@ -30,6 +30,8 @@ let
       ./deterministic-build.patch
     ];
 
+  # The `/usr/bin/arch` substitution only affects darwin systems,
+  # and i386 just means intel here (not 32-bit specifically)
   ensurePurity = ''
     substituteInPlace configure \
       --replace '`/usr/bin/arch`' '"i386"'

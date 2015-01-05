@@ -1,20 +1,25 @@
-{ stdenv, fetchFromGitHub, emacs, texinfo }:
+{ stdenv, fetchurl, emacs, texinfo }:
 
-stdenv.mkDerivation rec {
-  name = "haskell-mode-20141113";
+let
+  version = "13.10";
+in
+stdenv.mkDerivation {
+  name = "haskell-mode-${version}";
 
-  src = fetchFromGitHub {
-    owner = "haskell";    
-    repo = "haskell-mode";
-    rev = "fa6468ed36166799439ffea454dddf85335bb424";
-    sha256 = "12qvlcbil25fs1amndpy03pfqlsbidav9rd1fc79whqxrgylxxnz";
+  src = fetchurl {
+    url = "https://github.com/haskell/haskell-mode/archive/v${version}.tar.gz";
+    sha256 = "0hcg7wpalcdw8j36m8vd854zrrgym074r7m903rpwfrhx9mlg02b";
   };
 
   buildInputs = [ emacs texinfo ];
 
+  makeFlags = "VERSION=${version} GIT_VERSION=${version}";
+
   installPhase = ''
-    mkdir -p "$out/share/emacs/site-lisp"
-    cp *.el *.elc *.hs "$out/share/emacs/site-lisp/"
+    mkdir -p $out/share/emacs/site-lisp
+    cp *.el *.elc *.hs $out/share/emacs/site-lisp/
+    mkdir -p $out/share/info
+    cp -v *.info* $out/share/info/
   '';
 
   meta = {

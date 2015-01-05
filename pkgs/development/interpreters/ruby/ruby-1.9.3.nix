@@ -6,7 +6,7 @@
 , groff, docSupport ? false
 , libyaml, yamlSupport ? true
 , ruby_1_9_3, autoreconfHook, bison, useRailsExpress ? true
-, libiconv
+, libiconv, libobjc ? null
 }:
 
 let
@@ -46,14 +46,14 @@ stdenv.mkDerivation rec {
     # support is not enabled, so add readline to the build inputs if curses
     # support is disabled (if it's enabled, we already have it) and we're
     # running on darwin
-    ++ (op (!cursesSupport && stdenv.isDarwin) readline);
+    ++ (op (!cursesSupport && stdenv.isDarwin) readline)
+    ++ (op stdenv.isDarwin libobjc);
 
   enableParallelBuilding = true;
 
   patches = [
     ./ruby19-parallel-install.patch
     ./bitperfect-rdoc.patch
-    ./no-libobjc.patch
   ] ++ ops useRailsExpress [
     "${patchSet}/patches/ruby/1.9.3/p547/railsexpress/01-fix-make-clean.patch"
     "${patchSet}/patches/ruby/1.9.3/p547/railsexpress/02-railsbench-gc.patch"
@@ -73,7 +73,7 @@ stdenv.mkDerivation rec {
     "${patchSet}/patches/ruby/1.9.3/p547/railsexpress/16-backport-psych-20.patch"
     "${patchSet}/patches/ruby/1.9.3/p547/railsexpress/17-fix-missing-c-return-event.patch"
     "${patchSet}/patches/ruby/1.9.3/p547/railsexpress/18-fix-process-daemon-call.patch"
-  ] ++ op (!useRailsExpress) ./no-libobjc-configure.patch;
+  ];
 
   configureFlags = [ "--enable-shared" "--enable-pthread" ]
     ++ op useRailsExpress "--with-baseruby=${baseruby}/bin/ruby"

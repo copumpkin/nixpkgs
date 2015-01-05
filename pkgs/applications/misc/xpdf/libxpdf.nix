@@ -23,7 +23,7 @@ stdenv.mkDerivation {
       sha256 = "0jskkv8x6dqr9zj4azaglas8cziwqqrkbbnzrpm2kzrvsbxyhk2r";
     })
     (fetchurl {
-      url = https://raw.githubusercontent.com/repoforge/rpms/b3ce92729c5bb047b5f70ab0cdbec95c38435f87/specs/xpdf/xpdf-3.02pl4.patch;
+      url = ftp://ftp.foolabs.com/pub/xpdf/xpdf-3.02pl4.patch;
       sha256 = "1c48h7aizx0ngmzlzw0mpja1w8vqyy3pg62hyxp7c60k86al715h";
     })
     ./xpdf-3.02-protection.patch

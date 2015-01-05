@@ -1,7 +1,9 @@
 { fetchurl, stdenv, pkgconfig, glib
 , useGtk ? !stdenv.isDarwin, gtk
 , useNcurses ? true, ncurses
-, useQt4 ? false, qt4 }:
+, useQt4 ? false, qt4
+, libiconv
+}:
 
 assert useGtk || useNcurses || useQt4;
 
@@ -13,7 +15,7 @@ stdenv.mkDerivation rec {
     sha256 = "1awhajq21hcjgqfxg9czaxg555gij4bba6axrwg8w6lfmc3ml14h";
   };
 
-  buildInputs = let opt = stdenv.lib.optional; in []
+  buildInputs = let opt = stdenv.lib.optional; in [libiconv]
     ++ opt useGtk glib
     ++ opt useGtk gtk
     ++ opt useNcurses ncurses

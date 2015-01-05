@@ -7,7 +7,7 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "${baseurl}/${name}.tar.gz";
-    sha256 = "1mzw4368hqw0b6xr01yqcbs9jk9ma3qq9hk3iqxmkiwqqxgirgln";
+    sha256 = "1ccn9v3kxz44pv3mr8q0l2i9769jiigw1gfv47ia50mbspwb87r6";
   };
 
   nativeBuildInputs = [ pkgconfig ];

@@ -5,7 +5,7 @@ stdenv.mkDerivation rec {
   name = "sqsh-${version}";
 
   src = fetchurl {
-    url = "mirror://sourceforge/project/sqsh/sqsh/sqsh-2.5/${name}.tgz";
+    url = "http://www.mirrorservice.org/sites/downloads.sourceforge.net/s/sq/sqsh/sqsh/sqsh-2.5/${name}.tgz";
     sha256 = "1wi0hdmhk7l8nrz4j3kaa177mmxyklmzhj7sq1gj4q6fb8v1yr6n";
   };
 

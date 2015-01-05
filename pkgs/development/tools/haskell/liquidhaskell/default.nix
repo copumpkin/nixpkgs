@@ -9,8 +9,8 @@
 
 cabal.mkDerivation (self: {
   pname = "liquidhaskell";
-  version = "0.2.0.0";
-  sha256 = "0ymf8fzq9lsq3ibk7r1rql5wa714gk16qmwflvshiw0kdgcc7fcl";
+  version = "0.2.1.0";
+  sha256 = "172ki1pr096jc1azs6hq1p6czjr2gxb0zafmlg9bicn4nwp2h7vy";
   isLibrary = true;
   isExecutable = true;
   buildDepends = [
@@ -22,10 +22,11 @@ cabal.mkDerivation (self: {
   testDepends = [
     filepath optparseApplicative tagged tasty tastyHunit tastyRerun
   ];
+  doCheck = false;
   meta = {
     homepage = "http://goto.ucsd.edu/liquidhaskell";
     description = "Liquid Types for Haskell";
-    license = "GPL";
+    license = self.stdenv.lib.licenses.bsd3;
     platforms = self.ghc.meta.platforms;
   };
 })

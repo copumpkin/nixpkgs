@@ -1,27 +1,68 @@
 { stdenv, fetchurl, cpio, bootstrap_cmds, xnu, libc, libm, libdispatch, cctools, libinfo,
   dyld, csu, architecture, libclosure, carbon-headers, ncurses, commonCrypto, copyfile,
-  removefile, libresolv, libnotify }:
+  removefile, libresolv, libnotify, libpthread, mDNSResponder }:
 
 stdenv.mkDerivation rec {
-  name = "libSystem";
+  version = "1197.1.1";
+  name    = "Libsystem-${version}";
 
-  phases = [ "installPhase" ];
+  src = fetchurl {
+    url    = "http://www.opensource.apple.com/tarballs/Libsystem/${name}.tar.gz";
+    sha256 = "1yfj2qdrf9vrzs7p9m4wlb7zzxcrim1gw43x4lvz4qydpp5kg2rh";
+  };
 
-  buildInputs = [ cpio ];
+  phases = [ "unpackPhase" "installPhase" ];
+
+  buildInputs = [ cpio libpthread ];
+
+  systemlibs = [ "cache"
+                 "commonCrypto"
+                 "compiler_rt"
+                 "copyfile"
+                 "corecrypto"
+                 "dispatch"
+                 "dyld"
+                 "keymgr"
+                 "kxld"
+                 "launch"
+                 "macho"
+                 "quarantine"
+                 "removefile"
+                 "system_asl"
+                 "system_blocks"
+                 # "system_c" # special re-export here to hide newer functions
+                 "system_configuration"
+                 "system_dnssd"
+                 "system_info"
+                 # "system_kernel" # special re-export here to hide newer functions
+                 "system_m"
+                 "system_malloc"
+                 "system_network"
+                 "system_notify"
+                 "system_platform"
+                 "system_pthread"
+                 "system_sandbox"
+                 "system_stats"
+                 "unc"
+                 "unwind"
+                 "xpc"
+               ];
 
   installPhase = ''
+    export NIX_ENFORCE_PURITY=
+
     mkdir -p $out/lib $out/include
 
     # Set up our include directories
-    cd ${xnu}/include && find . -name '*.h' | cpio -pdm $out/include
-    cp ${xnu}/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/Availability*.h $out/include
-    cp ${xnu}/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/stdarg.h        $out/include
+    (cd ${xnu}/include && find . -name '*.h' | cpio -pdm $out/include)
+    cp ${xnu}/Library/Frameworks/Kernel.framework/Versions/A/Headers/Availability*.h $out/include
+    cp ${xnu}/Library/Frameworks/Kernel.framework/Versions/A/Headers/stdarg.h        $out/include
 
-    for dep in ${libc} ${libm} ${libinfo} ${dyld} ${architecture} ${libclosure} ${carbon-headers} ${libdispatch} ${ncurses} ${commonCrypto} ${copyfile} ${removefile} ${libresolv} ${libnotify}; do
-      cd $dep/include && find . -name '*.h' | cpio -pdm $out/include
+    for dep in ${libc} ${libm} ${libinfo} ${dyld} ${architecture} ${libclosure} ${carbon-headers} ${libdispatch} ${ncurses} ${commonCrypto} ${copyfile} ${removefile} ${libresolv} ${libnotify} ${mDNSResponder}; do
+      (cd $dep/include && find . -name '*.h' | cpio -pdm $out/include)
     done
 
-    cd ${cctools}/include/mach-o && find . -name '*.h' | cpio -pdm $out/include/mach-o
+    (cd ${cctools}/include/mach-o && find . -name '*.h' | cpio -pdm $out/include/mach-o)
 
     cat <<EOF > $out/include/TargetConditionals.h
     #ifndef __TARGETCONDITIONALS__
@@ -46,8 +87,31 @@ stdenv.mkDerivation rec {
     ln -s ${libresolv}/lib/libresolv.9.dylib $out/lib/libresolv.9.dylib
     ln -s libresolv.9.dylib $out/lib/libresolv.dylib
 
+    # selectively re-export functions from libsystem_c and libsystem_kernel
+    # to provide a consistent interface across OSX verions
+    mkdir -p $out/lib/system
+    ld -macosx_version_min 10.7 -arch x86_64 -dylib \
+       -o $out/lib/system/libsystem_c.dylib \
+       /usr/lib/libSystem.dylib \
+       -reexported_symbols_list ${./system_c_symbols}
+
+    ld -macosx_version_min 10.7 -arch x86_64 -dylib \
+       -o $out/lib/system/libsystem_kernel.dylib \
+       /usr/lib/libSystem.dylib \
+       -reexported_symbols_list ${./system_kernel_symbols}
+
     # Set up the actual library link
-    ln -s /usr/lib/libSystem.dylib $out/lib/libSystem.dylib
+    clang -c -o CompatibilityHacks.o -Os CompatibilityHacks.c
+    clang -c -o init.o -Os init.c
+    ld -macosx_version_min 10.7 \
+       -arch x86_64 \
+       -dylib \
+       -o $out/lib/libSystem.dylib \
+       CompatibilityHacks.o init.o \
+       -reexport_library $out/lib/system/libsystem_c.dylib \
+       -reexport_library $out/lib/system/libsystem_kernel.dylib \
+        ${stdenv.lib.concatStringsSep " "
+          (map (l: "-reexport_library /usr/lib/system/lib${l}.dylib") systemlibs)}
 
     # Set up links to pretend we work like a conventional unix (Apple's design, not mine!)
     for name in c dbm dl info m mx poll proc pthread rpcsvc gcc_s.10.4 gcc_s.10.5; do
@@ -57,7 +121,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "The Mac OS libc/libSystem (impure symlinks to binaries with pure headers)";
-    maintainers = with maintainers; [ copumpkin ];
+    maintainers = with maintainers; [ copumpkin gridaphobe ];
     platforms   = platforms.darwin;
     license     = licenses.apsl20;
   };

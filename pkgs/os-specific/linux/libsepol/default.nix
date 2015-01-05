@@ -1,4 +1,4 @@
-{ stdenv, fetchgit }:
+{ stdenv, fetchurl }:
 
 stdenv.mkDerivation rec {
   name = "libsepol-${version}";
@@ -6,13 +6,10 @@ stdenv.mkDerivation rec {
   se_release = "20140506";
   se_url = "https://raw.githubusercontent.com/wiki/SELinuxProject/selinux/files/releases";
 
-  src = fetchgit {
-    url = "https://github.com/SELinuxProject/selinux";
-    rev = "refs/tags/libsepol-${version}";
-    sha256 = "0vi2k14gh512b2prnn31l0cg78lmqjqrybdgdyibbhcg2s4v5snb";
+  src = fetchurl {
+    url = "${se_url}/${se_release}/libsepol-${version}.tar.gz";
+    sha256 = "13z6xakc2qqyhlvnc5h53jy7lqmh5b5cnpfn51lmvfdpqd18d3fc";
   };
-
-  preConfigure = "cd libsepol";
 
   preBuild = '' makeFlags="$makeFlags PREFIX=$out DESTDIR=$out" '';
 

@@ -1,4 +1,4 @@
-export NIX_GCC=@out@
+export NIX_CC=@out@
 
 addCVars () {
     if [ -d $1/include ]; then

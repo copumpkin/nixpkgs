@@ -43,19 +43,19 @@ postConfigure() {
     if test "$noSysDirs" = "1"; then
         # Patch some of the makefiles to force linking against our own
         # glibc.
-        if test -e $NIX_CC/nix-support/orig-libc; then
+        if test -e $NIX_GCC/nix-support/orig-libc; then
 
             # Figure out what extra flags to pass to the gcc compilers
             # being generated to make sure that they use our glibc.
-	    extraFlags="$(cat $NIX_CC/nix-support/libc-cflags)"
-            for i in $(cat $NIX_CC/nix-support/libc-ldflags) $(cat $NIX_CC/nix-support/libc-ldflags-before); do
+	    extraFlags="$(cat $NIX_GCC/nix-support/libc-cflags)"
+            for i in $(cat $NIX_GCC/nix-support/libc-ldflags) $(cat $NIX_GCC/nix-support/libc-ldflags-before); do
 	        extraFlags="$extraFlags -Wl,$i"
             done
 
             # Use *real* header files, otherwise a limits.h is generated
             # that does not include Glibc's limits.h (notably missing
             # SSIZE_MAX, which breaks the build).
-            export FIXINC_DUMMY=$(cat $NIX_CC/nix-support/orig-libc)/include
+            export FIXINC_DUMMY=$(cat $NIX_GCC/nix-support/orig-libc)/include
         fi
 
         mf=Makefile

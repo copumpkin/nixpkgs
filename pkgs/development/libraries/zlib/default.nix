@@ -22,8 +22,6 @@ stdenv.mkDerivation rec {
 
   configureFlags = if static then "" else "--shared";
   
-  isAnAncientPoS=1;
-
   preConfigure = ''
     if test -n "$crossConfig"; then
       export CC=$crossConfig-gcc

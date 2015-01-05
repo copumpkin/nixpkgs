@@ -20,7 +20,7 @@ stdenv.mkDerivation rec {
   '';
 
   buildPhase = ''
-    patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" snx
+    patchelf --set-interpreter "$(cat $NIX_GCC/nix-support/dynamic-linker)" snx
   '';
 
   installPhase = ''
