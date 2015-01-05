@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, python, osx_sdk }:
+{ stdenv, fetchFromGitHub, python, rsync, osx_sdk }:
 
 let
   sdkVersion = "10.9";
@@ -12,14 +12,14 @@ in stdenv.mkDerivation {
     sha256 = "1vj3fxwp32irxjk987p7a223sm5bl5rrlajcvgy69k0wb0fp0krc";
   };
 
-  buildInputs = [ python ];
+  buildInputs = [ python rsync ];
 
   configurePhase = "true";
   buildPhase = "true";
 
   installPhase = ''
-    /usr/bin/rsync -av ${osx_sdk}/Developer/SDKs/MacOSX${sdkVersion}.sdk/ $out
-    /usr/bin/rsync -av ./ $out
+    rsync -av ${osx_sdk}/Developer/SDKs/MacOSX${sdkVersion}.sdk/ $out
+    rsync -av ./ $out
   '';
 
   meta = with stdenv.lib; {
