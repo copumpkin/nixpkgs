@@ -33,5 +33,9 @@ let
 
     passthru.jre = jdk;
 
+    meta = {
+      platforms = stdenv.lib.platforms.linux;
+    };
+
   };
 in jdk
