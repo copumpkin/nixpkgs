@@ -14,7 +14,6 @@ stdenv.mkDerivation rec {
     ${gnused}/bin/sed -e '/^env[.]Append(BUILDERS/ienv.Append(ENV={"PATH":os.environ["PATH"]})' -i SConstruct
     ${gnused}/bin/sed -e '/^env[.]Append(BUILDERS/ienv.Append(ENV={"NIX_CFLAGS_COMPILE":os.environ["NIX_CFLAGS_COMPILE"]})' -i SConstruct
     ${gnused}/bin/sed -e '/^env[.]Append(BUILDERS/ienv.Append(ENV={"NIX_LDFLAGS":os.environ["NIX_LDFLAGS"]})' -i SConstruct
-    ${gnused}/bin/sed -e '/^env[.]Append(BUILDERS/ienv.Append(ENV={"NIX_LDFLAGS_BEFORE":os.environ["NIX_LDFLAGS_BEFORE"]})' -i SConstruct
     ${gnused}/bin/sed -e '/^env[.]Append(BUILDERS/ienv.Append(ENV={"TMPDIR":os.environ["TMPDIR"]})' -i SConstruct
   '';
 
