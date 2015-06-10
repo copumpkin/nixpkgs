@@ -15,7 +15,7 @@ stdenv.mkDerivation rec {
     sha256 = "152yamak9ykl8dgkx1qzyrpa3f4xr1s8lgcb5k58r9lb1iwnhvqc";
   };
 
-  NIX_LDFLAGS = "-lgcc_s";
+  NIX_LDFLAGS = stdenv.lib.optionalString (!stdenv.isDarwin) "-lgcc_s";
 
   postPatch = ''
     # within Nix chroot builds, localhost is unresolvable

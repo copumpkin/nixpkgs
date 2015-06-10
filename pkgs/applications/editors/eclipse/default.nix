@@ -98,6 +98,22 @@ in {
         };
   };
 
+  eclipse_scala_sdk_40 = buildEclipse {
+    name = "eclipse-scala_sdk-4.0.0";
+    description = "Eclipse IDE for Scala Developers";
+    src =
+      if stdenv.system == "x86_64-linux" then
+        fetchurl { # tested
+          url = http://downloads.typesafe.com/scalaide-pack/4.0.0.vfinal-luna-211-20150305/scala-SDK-4.0.0-vfinal-2.11-linux.gtk.x86_64.tar.gz;
+          sha256  = "b65c5e8160e72c8389537e9e427138e6daa2065f9df3a943a86e40dd1543dd83";
+        }
+      else
+        fetchurl { # untested
+          url = http://downloads.typesafe.com/scalaide-pack/4.0.0.vfinal-luna-211-20150305/scala-SDK-4.0.0-vfinal-2.11-linux.gtk.x86.tar.gz;
+          sha256 = "f422aea5903c97d212264a5a43c6ebc638aecbd4ce5e6078d92618725bc5d31e";
+        };
+  };
+
   eclipse_cpp_36 = buildEclipse {
     name = "eclipse-cpp-3.6.2";
     description = "Eclipse IDE for C/C++ Developers";
@@ -282,7 +298,7 @@ in {
         };
       "i686-linux" = fetchurl {
           url = http://download.eclipse.org/eclipse/downloads/drops4/R-4.4.2-201502041700/eclipse-SDK-4.4.2-linux-gtk.tar.gz;
-          sha256 = "9f4238ce9f887a1a57bbc6c6898e43357d14a6d74f59385327813c5e82aa735d";
+          sha256 = "1hacyjjwhhxi7r3xyhpqgjqpd5r0irw9bfkalz5s5l6shb0lq4i7";
         };
     };
   };

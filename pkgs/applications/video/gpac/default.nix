@@ -1,4 +1,4 @@
-{ stdenv, fetchsvn, pkgconfig, zlib }:
+{ stdenv, fetchsvn, pkgconfig, zlib, libtool }:
 
 stdenv.mkDerivation rec {
   name = "gpac-0.5.0-svn";
@@ -11,7 +11,8 @@ stdenv.mkDerivation rec {
 
   # this is the bare minimum configuration, as I'm only interested in MP4Box
   # For most other functionality, this should probably be extended
-  nativeBuildInputs = [ pkgconfig zlib ];
+  nativeBuildInputs = [ pkgconfig zlib ] ++
+    stdenv.lib.optional stdenv.isDarwin libtool;
 
   meta = {
     description = "Open Source multimedia framework for research and academic purposes";

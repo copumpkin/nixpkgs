@@ -1,6 +1,6 @@
 { stdenv, fetchurl, ncurses, openssl, perl, python, aspell, gnutls
-, zlib, curl , pkgconfig, libgcrypt, ruby, lua5, tcl, guile
-, pythonPackages, cacert, cmake, makeWrapper
+, zlib, curl , pkgconfig, libgcrypt, ruby, lua5, tcl, guile, libiconv
+, pythonPackages, cacert, cmake, makeWrapper, libobjc
 , extraBuildInputs ? [] }:
 
 stdenv.mkDerivation rec {
@@ -12,10 +12,11 @@ stdenv.mkDerivation rec {
     sha256 = "0j8kc2zsv7ybgq6wi0r8siyd3adl3528gymgmidijd78smbpwbx3";
   };
 
-  buildInputs = 
+  buildInputs =
     [ ncurses perl python openssl aspell gnutls zlib curl pkgconfig
       libgcrypt ruby lua5 tcl guile pythonPackages.pycrypto makeWrapper
-      cacert cmake ]
+      cacert cmake libiconv ]
+    ++ stdenv.lib.optionals stdenv.isDarwin [ pythonPackages.pync libobjc ]
     ++ extraBuildInputs;
 
   NIX_CFLAGS_COMPILE = "-I${python}/include/${python.libPrefix} -DCA_FILE=${cacert}/etc/ca-bundle.crt";
@@ -26,6 +27,8 @@ stdenv.mkDerivation rec {
       --prefix PYTHONPATH : "$PYTHONPATH" \
       --prefix PYTHONPATH : "$NIX_PYTHONPATH"
   '';
+
+  cmakeFlags = "-DICONV_LIBRARY=${libiconv}/lib/libiconv.dylib";
 
   meta = {
     homepage = http://www.weechat.org/;

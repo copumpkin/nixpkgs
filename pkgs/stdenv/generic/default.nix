@@ -10,6 +10,8 @@ let lib = import ../../../lib; in lib.makeOverridable (
 , setupScript ? ./setup.sh
 
 , extraBuildInputs ? []
+, __stdenvImpureHostDeps ? []
+, __extraImpureHostDeps ? []
 }:
 
 let
@@ -71,31 +73,41 @@ let
 
   unsafeGetAttrPos = builtins.unsafeGetAttrPos or (n: as: null);
 
-  defaultNativeBuildInputs = extraBuildInputs ++
+  defaultNativeBuildInputs = [ cc ] ++ extraBuildInputs ++
     [ ../../build-support/setup-hooks/move-docs.sh
       ../../build-support/setup-hooks/compress-man-pages.sh
       ../../build-support/setup-hooks/strip.sh
       ../../build-support/setup-hooks/patch-shebangs.sh
       ../../build-support/setup-hooks/move-sbin.sh
       ../../build-support/setup-hooks/move-lib64.sh
-      cc
     ];
 
   # Add a utility function to produce derivations that use this
   # stdenv and its shell.
-  mkDerivation = attrs:
+  mkDerivation =
+    { buildInputs ? []
+    , nativeBuildInputs ? []
+    , propagatedBuildInputs ? []
+    , propagatedNativeBuildInputs ? []
+    , crossConfig ? null
+    , meta ? {}
+    , passthru ? {}
+    , pos ? null # position used in error messages and for meta.position
+    , ... } @ attrs:
     let
-      pos =
-        if attrs.meta.description or null != null then
-          unsafeGetAttrPos "description" attrs.meta
+      pos' =
+        if pos != null then
+          pos
+        else if attrs.meta.description or null != null then
+          builtins.unsafeGetAttrPos "description" attrs.meta
         else
-          unsafeGetAttrPos "name" attrs;
-      pos' = if pos != null then "‘" + pos.file + ":" + toString pos.line + "’" else "«unknown-file»";
+          builtins.unsafeGetAttrPos "name" attrs;
+      pos'' = if pos' != null then "‘" + pos'.file + ":" + toString pos'.line + "’" else "«unknown-file»";
 
       throwEvalHelp = unfreeOrBroken: whatIsWrong:
         assert builtins.elem unfreeOrBroken ["Unfree" "Broken" "blacklisted"];
 
-        throw ("Package ‘${attrs.name or "«name-missing»"}’ in ${pos'} ${whatIsWrong}, refusing to evaluate."
+        throw ("Package ‘${attrs.name or "«name-missing»"}’ in ${pos''} ${whatIsWrong}, refusing to evaluate."
         + (lib.strings.optionalString (unfreeOrBroken != "blacklisted") ''
 
           For `nixos-rebuild` you can set
@@ -121,13 +133,19 @@ let
       assert licenseAllowed attrs;
 
       lib.addPassthru (derivation (
-        (removeAttrs attrs ["meta" "passthru" "crossAttrs"])
+        (removeAttrs attrs ["meta" "passthru" "crossAttrs" "pos"])
         // (let
           buildInputs = attrs.buildInputs or [];
           nativeBuildInputs = attrs.nativeBuildInputs or [];
           propagatedBuildInputs = attrs.propagatedBuildInputs or [];
           propagatedNativeBuildInputs = attrs.propagatedNativeBuildInputs or [];
           crossConfig = attrs.crossConfig or null;
+
+          __impureHostDeps = attrs.__impureHostDeps or [];
+          __propagatedImpureHostDeps = attrs.__propagatedImpureHostDeps or [];
+
+          computedImpureHostDeps           = lib.concatMap (input: input.__propagatedImpureHostDeps or []) (extraBuildInputs ++ buildInputs ++ nativeBuildInputs);
+          computedPropagatedImpureHostDeps = lib.concatMap (input: input.__propagatedImpureHostDeps or []) (propagatedBuildInputs ++ propagatedNativeBuildInputs);
         in
         {
           builder = attrs.realBuilder or shell;
@@ -144,6 +162,14 @@ let
           nativeBuildInputs = nativeBuildInputs ++ (if crossConfig == null then buildInputs else []);
           propagatedNativeBuildInputs = propagatedNativeBuildInputs ++
             (if crossConfig == null then propagatedBuildInputs else []);
+
+          __impureHostDeps = lib.unique (lib.sort (x: y: x < y) (computedImpureHostDeps ++ computedPropagatedImpureHostDeps ++ __propagatedImpureHostDeps ++ __impureHostDeps ++ __extraImpureHostDeps ++ [
+            "/dev/zero"
+            "/dev/random"
+            "/dev/urandom"
+            "/bin/sh"
+          ]));
+          __propagatedImpureHostDeps = lib.unique (lib.sort (x: y: x < y) (computedPropagatedImpureHostDeps ++ __propagatedImpureHostDeps));
         }))) (
       {
         # The meta attribute is passed in the resulting attribute set,
@@ -152,15 +178,15 @@ let
         # include it in the result, it *is* available to nix-env for
         # queries.  We also a meta.position attribute here to
         # identify the source location of the package.
-        meta = attrs.meta or {} // (if pos != null then {
-          position = pos.file + ":" + (toString pos.line);
+        meta = meta // (if pos' != null then {
+          position = pos'.file + ":" + toString pos'.line;
         } else {});
-        passthru = attrs.passthru or {};
+        inherit passthru;
       } //
       # Pass through extra attributes that are not inputs, but
       # should be made available to Nix expressions using the
       # derivation (e.g., in assertions).
-      (attrs.passthru or {}));
+      passthru);
 
   # The stdenv that we are producing.
   result =
@@ -168,6 +194,7 @@ let
     (if isNull allowedRequisites then {} else { allowedRequisites = allowedRequisites ++ defaultNativeBuildInputs; }) //
     {
       inherit system name;
+      __impureHostDeps = __stdenvImpureHostDeps;
 
       builder = shell;
 
@@ -217,7 +244,8 @@ let
              || system == "x86_64-darwin"
              || system == "x86_64-freebsd"
              || system == "x86_64-openbsd"
-             || system == "x86_64-solaris";
+             || system == "x86_64-solaris"
+             || system == "mips64el-linux";
       isMips = system == "mips-linux"
             || system == "mips64el-linux";
       isArm = system == "armv5tel-linux"

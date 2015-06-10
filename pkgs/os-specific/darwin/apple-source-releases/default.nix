@@ -66,11 +66,12 @@ let
     libdispatch     = applePackage "libdispatch"       "339.92.1"    "1lc5033cmkwxy3r26gh9plimxshxfcbgw6i0j7mgjlnpk86iy5bk" {};
     libiconv        = applePackage "libiconv"          "41"          "10q7yd35flr893nysn9i04njgks4m3gis7jivb9ra9dcb77gqdcn" {};
     Libinfo         = applePackage "Libinfo"           "449.1.3"     "1ix6f7xwjnq9bqgv8w27k4j64bqn1mfhh91nc7ciiv55axpdb9hq" {};
-    Libm            = applePackage "Libm"              "2026"        "02sd82ig2jvvyyfschmb4gpz6psnizri8sh6i982v341x6y4ysl7" {};
+    Libm            = applePackage "Libm"              "2026"        "02sd82ig2jvvyyfschmb4gpz6psnizri8sh6i982v341x6y4ysl7" {}; # This is from 10.7 !! :(
     Libnotify       = applePackage "Libnotify"         "121.20.1"    "164rx4za5z74s0mk9x0m1815r1m9kfal8dz3bfaw7figyjd6nqad" {};
     libpthread      = applePackage "libpthread"        "105.1.4"     "09vwwahcvmxvx2xl0890gkp91n61dld29j73y2pa597bqkag2qpg" {};
     libresolv       = applePackage "libresolv"         "54"          "028mp2smd744ryxwl8cqz4njv8h540sdw3an1yl7yxqcs04r0p4b" {};
     Libsystem       = applePackage "Libsystem"         "1197.1.1"    "1yfj2qdrf9vrzs7p9m4wlb7zzxcrim1gw43x4lvz4qydpp5kg2rh" {};
+    libutil         = applePackage "libutil"           "38"          "12gsvmj342n5d81kqwba68bmz3zf2757442g1sz2y5xmcapa3g5f" {};
     libunwind       = applePackage "libunwind"         "35.3"        "0miffaa41cv0lzf8az5k1j1ng8jvqvxcr4qrlkf3xyj479arbk1b" {};
     mDNSResponder   = applePackage "mDNSResponder"     "522.92.1"    "1cp87qda1s7brriv413i71yggm8yqfwv64vknrnqv24fcb8hzbmy" {};
     objc4           = applePackage "objc4"             "551.1"       "1jrdb6yyb5jwwj27c1r0nr2y2ihqjln8ynj61mpkvp144c1cm5bg" {};

@@ -87,11 +87,10 @@ stdenv.mkDerivation rec {
        done
      '';
 
-  configurePhase = ''
-    ./configure --prefix=$out \
-      --with-gmp-libraries=${gmp}/lib --with-gmp-includes=${gmp}/include \
-      ${stdenv.lib.optionalString stdenv.isDarwin "--with-gcc=${../../haskell-modules/gcc-clang-wrapper.sh}"}
-  '';
+  configurePhase = "./configure ${configureFlags}";
+
+  configureFlags = "--prefix=$out --with-gmp-libraries=${gmp}/lib --with-gmp-includes=${gmp}/include"
+                 + stdenv.lib.optionalString stdenv.isDarwin " --with-gcc=${../../haskell-modules/gcc-clang-wrapper.sh}";
 
   # Stripping combined with patchelf breaks the executables (they die
   # with a segfault or the kernel even refuses the execve). (NIXPKGS-85)
@@ -101,20 +100,35 @@ stdenv.mkDerivation rec {
   # calls install-strip ...
   buildPhase = "true";
 
-  postInstall =
-      ''
-        # Sanity check, can ghc create executables?
-        cd $TMP
-        mkdir test-ghc; cd test-ghc
-        cat > main.hs << EOF
-          module Main where
-          main = putStrLn "yes"
-        EOF
-        $out/bin/ghc --make main.hs
-        echo compilation ok
-        [ $(./main) == "yes" ]
-      '';
+  preInstall = stdenv.lib.optionalString stdenv.isDarwin ''
+    mkdir -p $out/lib/ghc-7.0.4
+    mkdir -p $out/bin
+    ln -s ${libiconv}/lib/libiconv.dylib $out/lib/ghc-7.0.4/libiconv.dylib
+    ln -s ${libiconv}/lib/libiconv.dylib utils/ghc-cabal/dist-install/build/tmp
+    ln -s ${libiconv}/lib/libiconv.dylib $out/bin/libiconv.dylib
+
+    install_name_tool -change /usr/lib/libgcc_s.1.dylib @executable_path/libgcc_s.1.dylib \
+      $(find . -type f -name unlit)
+    ld -dylib -o $out/lib/ghc-7.0.4/libgcc_s.1.dylib \
+      ${stdenv.libc}/lib/libgcc_s.10.5.dylib \
+      -dylib_current_version 1.0.0 \
+      -dylib_compatibility_version 1.0.0
+  '';
+
+  postInstall = ''
+    # Sanity check, can ghc create executables?
+    cd $TMP
+    mkdir test-ghc; cd test-ghc
+    cat > main.hs << EOF
+      {-# LANGUAGE TemplateHaskell #-}
+      module Main where
+      main = putStrLn \$([|"yes"|])
+    EOF
+    $out/bin/ghc --make main.hs || exit 1
+    echo compilation ok
+    [ $(./main) == "yes" ]
+  '';
 
   meta.license = stdenv.lib.licenses.bsd3;
-  meta.platforms = ["x86_64-linux" "i686-linux" "i686-darwin" "x86_64-darwin"];
+  meta.platforms = ["x86_64-linux" "i686-linux" "x86_64-darwin"];
 }

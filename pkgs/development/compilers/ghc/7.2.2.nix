@@ -13,6 +13,8 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ ghc perl gmp ncurses ];
 
+  enableParallelBuilding = true;
+
   buildMK = ''
     libraries/integer-gmp_CONFIGURE_OPTS += --configure-option=--with-gmp-libraries="${gmp}/lib"
     libraries/integer-gmp_CONFIGURE_OPTS += --configure-option=--with-gmp-includes="${gmp}/include"
@@ -45,13 +47,13 @@ stdenv.mkDerivation rec {
   meta = {
     homepage = "http://haskell.org/ghc";
     description = "The Glasgow Haskell Compiler";
-    broken = stdenv.isDarwin;
     maintainers = [
       stdenv.lib.maintainers.marcweber
       stdenv.lib.maintainers.andres
       stdenv.lib.maintainers.simons
     ];
-    inherit (ghc.meta) license platforms;
+    platforms = ["x86_64-linux" "i686-linux"];  # Darwin is unsupported.
+    inherit (ghc.meta) license;
   };
 
 }

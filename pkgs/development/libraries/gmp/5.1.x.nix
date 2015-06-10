@@ -14,7 +14,9 @@ stdenv.mkDerivation rec {
 
   patches = if stdenv.isDarwin then [ ./need-size-t.patch ] else null;
 
-  configureFlags =
+  # CC=cc works regardless of gcc or clang, and this prevents the generated output from retaining
+  # unnecessary absolute references to our bootstrap tools during the darwin stdenv bootstrapping
+  configureFlags = [ "CC=cc" ] ++
     # Build a "fat binary", with routines for several sub-architectures
     # (x86), except on Solaris where some tests crash with "Memory fault".
     # See <http://hydra.nixos.org/build/2760931>, for instance.

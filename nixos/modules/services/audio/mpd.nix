@@ -11,7 +11,7 @@ let
   mpdConf = pkgs.writeText "mpd.conf" ''
     music_directory     "${cfg.musicDirectory}"
     playlist_directory  "${cfg.dataDir}/playlists"
-    db_file             "${cfg.dataDir}/tag_cache"
+    db_file             "${cfg.dbFile}"
     state_file          "${cfg.dataDir}/state"
     sticker_file        "${cfg.dataDir}/sticker.sql"
     log_file            "syslog"
@@ -93,6 +93,14 @@ in {
         };
 
       };
+
+      dbFile = mkOption {
+        type = types.str;
+        default = "${cfg.dataDir}/tag_cache";
+        description = ''
+          The path to MPD's database.
+        '';
+      };
     };
 
   };
@@ -125,6 +133,7 @@ in {
     });
 
     users.extraGroups = optionalAttrs (cfg.group == "mpd") (singleton {
+      name = "mpd";
       gid = gid;
     });
   };

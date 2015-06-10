@@ -1,16 +1,65 @@
-{ stdenv, fetchurl, bash }:
+{ stdenv, fetchurl, bash, callPackage, makeWrapper
+, clang, llvm, which, libcgroup }:
 
+let
+  afl-qemu = callPackage ./qemu.nix {};
+  qemu-exe-name = if stdenv.system == "x86_64-linux" then "qemu-x86_64"
+    else if stdenv.system == "i686-linux" then "qemu-i386"
+    else throw "afl: no support for ${stdenv.system}!";
+in
 stdenv.mkDerivation rec {
   name    = "afl-${version}";
-  version = "1.56b";
+  version = "1.67b";
 
   src = fetchurl {
     url    = "http://lcamtuf.coredump.cx/afl/releases/${name}.tgz";
-    sha256 = "1nagd9ycj0i1h7kx2pz07fpwy4b528inmc9hj7226qiid0bynsh4";
+    sha256 = "11763zgwqg2b5hak006rp0jb3w252js067z9ibgl4nj3br2ncmd2";
   };
 
-  buildPhase   = "make PREFIX=$out";
-  installPhase = "make install PREFIX=$out";
+  # Note: libcgroup isn't needed for building, just for the afl-cgroup
+  # script.
+  buildInputs  = [ makeWrapper clang llvm which ];
+
+  buildPhase   = ''
+    make PREFIX=$out
+    cd llvm_mode && make && cd ..
+  '';
+  installPhase = ''
+    # Do the normal installation
+    make install PREFIX=$out
+
+    # Install the custom QEMU emulator for binary blob fuzzing.
+    cp ${afl-qemu}/bin/${qemu-exe-name} $out/bin/afl-qemu-trace
+
+    # Install the cgroups wrapper for asan-based fuzzing.
+    cp experimental/asan_cgroups/limit_memory.sh $out/bin/afl-cgroup
+    chmod +x $out/bin/afl-cgroup
+    substituteInPlace $out/bin/afl-cgroup \
+      --replace "cgcreate" "${libcgroup}/bin/cgcreate" \
+      --replace "cgexec"   "${libcgroup}/bin/cgexec" \
+      --replace "cgdelete" "${libcgroup}/bin/cgdelete"
+
+    # Patch shebangs before wrapping
+    patchShebangs $out/bin
+
+    # Wrap every program with a custom $AFL_PATH; I believe there is a
+    # bug in afl which causes it to fail to find `afl-qemu-trace`
+    # relative to `afl-fuzz` or `afl-showmap`, so we instead set
+    # $AFL_PATH as a workaround, which allows it to be found.
+    for x in `ls $out/bin/afl-* | grep -v afl-clang-fast`; do
+      wrapProgram $x --prefix AFL_PATH : "$out/bin"
+    done
+    # Wrap afl-clang-fast(++) with a *different* AFL_PATH, because it
+    # has totally different semantics in that case(?) - and also set a
+    # proper AFL_CC and AFL_CXX so we don't pick up the wrong one out
+    # of $PATH.
+    for x in $out/bin/afl-clang-fast $out/bin/afl-clang-fast++; do
+      wrapProgram $x \
+        --prefix AFL_PATH : "$out/lib/afl" \
+        --prefix AFL_CC   : "${clang}/bin/clang" \
+        --prefix AFL_CXX  : "${clang}/bin/clang++"
+    done
+  '';
 
   meta = {
     description = "Powerful fuzzer via genetic algorithms and instrumentation";

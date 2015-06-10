@@ -1,34 +1,37 @@
-{ stdenv, fetchFromGitHub, which, go, makeWrapper, iptables,rsync }:
+{ stdenv, fetchFromGitHub, which, go, makeWrapper, iptables, rsync, utillinux, coreutils }:
 
 stdenv.mkDerivation rec {
   name = "kubernetes-${version}";
-  version = "v0.5.4";
+  version = "0.15.0";
 
   src = fetchFromGitHub {
     owner = "GoogleCloudPlatform";
     repo = "kubernetes";
-    rev = version;
-    sha256 = "1pipcqpjz9zsi4kfsbdvbbbia642l4xg50pznjw5v061c5xk7vnk";
+    rev = "v${version}";
+    sha256 = "1jiczhx01i8czm1gzd232z2ds2f1lvs5ifa9zjabhzw5ykfzdjg8";
   };
 
   buildInputs = [ makeWrapper which go iptables rsync ];
 
-  preBuild = "patchShebangs ./hack";
-
-  postBuild = ''go build --ldflags '-extldflags "-static" -s' build/pause/pause.go'';
+  buildPhase = ''
+    substituteInPlace "hack/lib/golang.sh" --replace "_cgo" ""
+    GOPATH=$(pwd)
+    patchShebangs ./hack
+    hack/build-go.sh --use_go_build
+  '';
 
   installPhase = ''
     mkdir -p "$out/bin"
     cp _output/local/go/bin/* "$out/bin/"
-    cp pause $out/bin/kube-pause
   '';
 
   preFixup = ''
-    wrapProgram "$out/bin/kube-proxy" --set "PATH" "${iptables}/bin"
+    wrapProgram "$out/bin/kube-proxy" --prefix PATH : "${iptables}/bin"
+    wrapProgram "$out/bin/kubelet" --prefix PATH : "${utillinux}/bin"
   '';
 
   meta = with stdenv.lib; {
-    description = "Open source implementation of container cluster management.";
+    description = "Open source implementation of container cluster management";
     license = licenses.asl20;
     homepage = https://github.com/GoogleCloudPlatform;
     maintainers = with maintainers; [offline];

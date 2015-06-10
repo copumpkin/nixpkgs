@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
   # work in pure build enviroments.
   configureFlags =
     if stdenv.isLinux then [ "--with-pcap=linux" ]
-    else if stdenv.isDarwin then [ "--with-pcap=bpf" ]
+    else if stdenv.isDarwin then [ "--with-pcap=bpf" "--disable-universal" ]
     else [];
 
   preInstall = ''mkdir -p $out/bin'';

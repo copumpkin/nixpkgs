@@ -7,6 +7,8 @@
 , libyaml, yamlSupport ? true
 , libffi, fiddleSupport ? true
 , ruby_2_1_3, autoreconfHook, bison, useRailsExpress ? true
+, libiconv, libobjc ? null
+, libunwind
 }:
 
 let
@@ -35,7 +37,8 @@ stdenv.mkDerivation rec {
   # Have `configure' avoid `/usr/bin/nroff' in non-chroot builds.
   NROFF = "${groff}/bin/nroff";
 
-  buildInputs = ops useRailsExpress [ autoreconfHook bison ]
+  buildInputs = [libiconv libunwind]
+    ++ (ops useRailsExpress [ autoreconfHook bison ] )
     ++ (op fiddleSupport libffi)
     ++ (ops cursesSupport [ ncurses readline ])
     ++ (op docSupport groff)
@@ -47,7 +50,8 @@ stdenv.mkDerivation rec {
     # support is not enabled, so add readline to the build inputs if curses
     # support is disabled (if it's enabled, we already have it) and we're
     # running on darwin
-    ++ (op (!cursesSupport && stdenv.isDarwin) readline);
+    ++ (op (!cursesSupport && stdenv.isDarwin) readline)
+    ++ (op stdenv.isDarwin libobjc);
 
   enableParallelBuilding = true;
 
@@ -75,7 +79,8 @@ stdenv.mkDerivation rec {
     cp ${config}/config.sub tool/
   '';
 
-  configureFlags = ["--enable-shared" ]
+  # disable-install-doc so as to avoid locking up the machine
+  configureFlags = ["--enable-shared" "--disable-install-doc"]
     ++ op useRailsExpress "--with-baseruby=${baseruby}/bin/ruby"
     # on darwin, we have /usr/include/tk.h -- so the configure script detects
     # that tk is installed

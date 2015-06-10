@@ -7,7 +7,12 @@
 , libyaml, yamlSupport ? true
 , libffi, fiddleSupport ? true
 , ruby_2_0_0, autoreconfHook, bison, useRailsExpress ? true
+, libiconv, libobjc
 }:
+
+# FIXME: building this on darwin will freeze your entire computer for unknown reasons
+# remove this assertion at your own risk
+assert (!stdenv.isDarwin);
 
 let
   op = stdenv.lib.optional;
@@ -34,7 +39,8 @@ stdenv.mkDerivation rec {
   # Have `configure' avoid `/usr/bin/nroff' in non-chroot builds.
   NROFF = "${groff}/bin/nroff";
 
-  buildInputs = ops useRailsExpress [ autoreconfHook bison ]
+  buildInputs = [libiconv]
+    ++ (ops useRailsExpress [ autoreconfHook bison ] )
     ++ (op fiddleSupport libffi)
     ++ (ops cursesSupport [ ncurses readline ] )
     ++ (op docSupport groff )
@@ -46,7 +52,8 @@ stdenv.mkDerivation rec {
     # support is not enabled, so add readline to the build inputs if curses
     # support is disabled (if it's enabled, we already have it) and we're
     # running on darwin
-    ++ (op (!cursesSupport && stdenv.isDarwin) readline);
+    ++ (op (!cursesSupport && stdenv.isDarwin) readline)
+    ++ (op stdenv.isDarwin libobjc);
 
   enableParallelBuilding = true;
 

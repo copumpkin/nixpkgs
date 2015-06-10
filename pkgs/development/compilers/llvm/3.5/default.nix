@@ -1,4 +1,4 @@
-{ pkgs, newScope, stdenv, isl, fetchurl }:
+{ pkgs, newScope, stdenv, isl, fetchurl, wrapCC }:
 let
   callPackage = newScope (self // { inherit stdenv isl version fetch; });
 
@@ -20,11 +20,13 @@ let
       inherit compiler-rt_src;
     };
 
-    clang = callPackage ./clang.nix rec {
+    clang-unwrapped = callPackage ./clang.nix {
       version = "3.5.0";
       fetch = fetch_v version;
       inherit clang-tools-extra_src;
     };
+
+    clang = wrapCC self.clang-unwrapped;
 
     lld = callPackage ./lld.nix {};
 

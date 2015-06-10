@@ -36,7 +36,7 @@ cabal.mkDerivation (self: {
     yesodDefault yesodForm yesodStatic
   ];
   buildTools = [
-    bup curl git gnupg1 lsof openssh perl rsync wget which
+    curl git gnupg1 lsof openssh perl rsync wget which
   ];
   configureFlags = "-fAssistant -fProduction";
   preConfigure = "export HOME=$TEMPDIR";

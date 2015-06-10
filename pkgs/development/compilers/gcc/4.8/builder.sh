@@ -23,8 +23,8 @@ if test "$noSysDirs" = "1"; then
 
         # Figure out what extra flags to pass to the gcc compilers
         # being generated to make sure that they use our glibc.
-        extraFlags="$(cat $NIX_CC/nix-support/libc-cflags)"
-        extraLDFlags="$(cat $NIX_CC/nix-support/libc-ldflags) $(cat $NIX_CC/nix-support/libc-ldflags-before)"
+        extraFlags="$(cat $NIX_CC/nix-support/libc-cflags) $NIX_CFLAGS_COMPILE"
+        extraLDFlags="$(cat $NIX_CC/nix-support/libc-ldflags) $(cat $NIX_CC/nix-support/libc-ldflags-before || true)"
 
         # Use *real* header files, otherwise a limits.h is generated
         # that does not include Glibc's limits.h (notably missing

@@ -4,6 +4,7 @@
 , ldapSupport ? true, openldap
 , libxml2Support ? true, libxml2
 , luaSupport ? false, lua5
+, libiconv
 }:
 
 let optional       = stdenv.lib.optional;
@@ -22,7 +23,7 @@ stdenv.mkDerivation rec {
     sha256 = "1r7a63ka41vlswrqbb21vall6sc7svwgd497kb6dh8a6zvnkjvdd";
   };
 
-  buildInputs = [perl] ++
+  buildInputs = [perl libiconv] ++
     optional ldapSupport openldap ++    # there is no --with-ldap flag
     optional libxml2Support libxml2;
 

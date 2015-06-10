@@ -13,8 +13,15 @@ stdenv.mkDerivation (rec {
     sha256 = "039agw5rqvqny92cpkrfn243x2gd4xn13hs3xi6isk55d2vqqr9n";
   };
 
-  configureFlags = if static then "" else "--shared";
+  postPatch = stdenv.lib.optionalString stdenv.isDarwin ''
+    substituteInPlace configure \
+      --replace '/usr/bin/libtool' 'ar' \
+      --replace 'AR="libtool"' 'AR="ar"' \
+      --replace 'ARFLAGS="-o"' 'ARFLAGS="-r"'
+  '';
 
+  configureFlags = if static then "" else "--shared";
+  
   preConfigure = ''
     if test -n "$crossConfig"; then
       export CC=$crossConfig-gcc
@@ -48,6 +55,7 @@ stdenv.mkDerivation (rec {
   meta = with stdenv.lib; {
     description = "Lossless data-compression library";
     license = licenses.zlib;
+    platforms = platforms.all;
   };
 } // (if stdenv.isDarwin then {
   postInstall = ''

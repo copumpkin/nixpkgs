@@ -23,7 +23,7 @@ in stdenv.mkDerivation {
     echo cp ${cmakeLists} libcxxabi-*/CMakeLists.txt
     cp ${cmakeLists} libcxxabi-*/CMakeLists.txt
     export NIX_CFLAGS_COMPILE+=" -I$PWD/include"
-    export cmakeFlags="-DLLVM_PATH=$PWD/$(ls -d llvm-*) -DLIBCXXABI_LIBCXX_INCLUDES=$PWD/$(ls -d libcxx-*)/include"
+    export cmakeFlags="-DLLVM_PATH=$(readlink -f llvm-*) -DLIBCXXABI_LIBCXX_INCLUDES=$(readlink -f libcxx-*)/include"
   '' + stdenv.lib.optionalString stdenv.isDarwin ''
     export TRIPLE=x86_64-apple-darwin
   '';

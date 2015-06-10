@@ -27,9 +27,10 @@ stdenv.mkDerivation {
 
   preConfigure = ''
     sed -i -e "s|/bin/sh|${stdenv.shell}|" configure
+    export INSTALL='install -c'
   '';
 
-  configureFlags = "--disable-debug" +
+  configureFlags = "--disable-debug CC=cc CXX=c++ SHELL=bash" +
     stdenv.lib.optionalString stdenv.isDarwin " --enable-rpath";
 
   enableParallelBuilding = true;

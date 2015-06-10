@@ -11,11 +11,21 @@ rec {
   doHaddock = drv: overrideCabal drv (drv: { doHaddock = true; });
   dontHaddock = drv: overrideCabal drv (drv: { doHaddock = false; });
 
+  doCpphs = drv: overrideCabal drv (drv: { useCpphs = true; });
+  dontCpphs = drv: overrideCabal drv (drv: { useCpphs = false; });
+
   doJailbreak = drv: overrideCabal drv (drv: { jailbreak = true; });
   dontJailbreak = drv: overrideCabal drv (drv: { jailbreak = false; });
 
   doCheck = drv: overrideCabal drv (drv: { doCheck = true; });
   dontCheck = drv: overrideCabal drv (drv: { doCheck = false; });
+
+  doCheckOn = system: if pkgs.stdenv.system == system
+    then doCheck
+    else x: x;
+  dontCheckOn = system: if pkgs.stdenv.system == system
+    then dontCheck
+    else x: x;
 
   dontDistribute = drv: overrideCabal drv (drv: { hydraPlatforms = []; });
 
@@ -54,5 +64,8 @@ rec {
 
   appendPatch = drv: x: appendPatches drv [x];
   appendPatches = drv: xs: overrideCabal drv (drv: { patches = (drv.patches or []) ++ xs; });
+
+  doHyperlinkSource = drv: overrideCabal drv (drv: { hyperlinkSource = true; });
+  dontHyperlinkSource = drv: overrideCabal drv (drv: { hyperlinkSource = false; });
 
 }

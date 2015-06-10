@@ -6,6 +6,7 @@
 , groff, docSupport ? false
 , libyaml, yamlSupport ? true
 , ruby_1_9_3, autoreconfHook, bison, useRailsExpress ? true
+, libiconv, libobjc ? null
 }:
 
 let
@@ -33,7 +34,8 @@ stdenv.mkDerivation rec {
   # Have `configure' avoid `/usr/bin/nroff' in non-chroot builds.
   NROFF = "${groff}/bin/nroff";
 
-  buildInputs = ops useRailsExpress [ autoreconfHook bison ]
+  buildInputs = [libiconv]
+    ++ (ops useRailsExpress [ autoreconfHook bison ] )
     ++ (ops cursesSupport [ ncurses readline ] )
     ++ (op docSupport groff )
     ++ (op zlibSupport zlib)
@@ -44,7 +46,8 @@ stdenv.mkDerivation rec {
     # support is not enabled, so add readline to the build inputs if curses
     # support is disabled (if it's enabled, we already have it) and we're
     # running on darwin
-    ++ (op (!cursesSupport && stdenv.isDarwin) readline);
+    ++ (op (!cursesSupport && stdenv.isDarwin) readline)
+    ++ (op stdenv.isDarwin libobjc);
 
   enableParallelBuilding = true;
 
@@ -77,6 +80,10 @@ stdenv.mkDerivation rec {
     # on darwin, we have /usr/include/tk.h -- so the configure script detects
     # that tk is installed
     ++ ( if stdenv.isDarwin then [ "--with-out-ext=tk " ] else [ ]);
+
+  postConfigure = ''
+    substituteInPlace Makefile --replace '-Wl,-u,_objc_msgSend' ""
+  '';
 
   installFlags = stdenv.lib.optionalString docSupport "install-doc";
 

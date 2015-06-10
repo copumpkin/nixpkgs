@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, yasm
+{ stdenv, fetchurl, pkgconfig, yasm, libiconv
 , freetype ? null
 , fribidi ? null
 , encaSupport ? true, enca ? null # enca support
@@ -37,7 +37,7 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ pkgconfig yasm ];
 
-  buildInputs = [ freetype fribidi ]
+  buildInputs = [ freetype fribidi libiconv ]
     ++ optional encaSupport enca
     ++ optional fontconfigSupport fontconfig
     ++ optional harfbuzzSupport harfbuzz;
@@ -46,7 +46,7 @@ stdenv.mkDerivation rec {
     description = "Portable ASS/SSA subtitle renderer";
     homepage    = https://github.com/libass/libass;
     license     = licenses.isc;
-    platforms   = platforms.linux;
+    platforms   = platforms.unix;
     maintainers = with maintainers; [ codyopel urkud ];
     repositories.git = git://github.com/libass/libass.git;
   };

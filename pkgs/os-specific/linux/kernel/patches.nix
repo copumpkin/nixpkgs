@@ -65,17 +65,17 @@ rec {
   };
 
   grsecurity_stable = grsecPatch
-    { kversion  = "3.14.35";
-      revision  = "201503092203";
+    { kversion  = "3.14.40";
+      revision  = "201504302118";
       branch    = "stable";
-      sha256    = "0l8m0ixh0qcgwy8vcmfl8pal93wc03ahc3ci3sca79nx33a050v9";
+      sha256    = "154ivf42ib93f8shh2b2qcqhppd1c6vbjfiazgigr006q638429i";
     };
 
   grsecurity_unstable = grsecPatch
-    { kversion  = "3.19.1";
-      revision  = "201503122205";
+    { kversion  = "3.19.6";
+      revision  = "201504302119";
       branch    = "test";
-      sha256    = "0g22wfmlim163gmsl4cn4nq4zif8zni3cpkk7cr93z92r9kafp4y";
+      sha256    = "03yj8011i6mkf33npa7all0c33r95mgiic6zjg494x56279s701s";
     };
 
   grsec_fix_path =
@@ -87,4 +87,5 @@ rec {
     { name = "crc-backport-regression";
       patch = ./crc-regression.patch;
     };
+
 }

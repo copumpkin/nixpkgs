@@ -1,7 +1,21 @@
-{ stdenv, fetchurl, zlib ? null, zlibSupport ? true, bzip2, includeModules ? false
-, sqlite, tcl, tk, x11, openssl, readline, db, ncurses, gdbm, libX11, self, callPackage }:
+{ stdenv, fetchurl, self, callPackage
+, bzip2, openssl
+
+, includeModules ? false
+
+, db, gdbm, ncurses, sqlite, readline
+
+, tcl ? null, tk ? null, x11 ? null, libX11 ? null, x11Support ? true
+, zlib ? null, zlibSupport ? true
+
+, configd, corefoundation
+}:
 
 assert zlibSupport -> zlib != null;
+assert x11Support -> tcl != null
+                  && tk != null
+                  && x11 != null
+                  && libX11 != null;
 
 with stdenv.lib;
 
@@ -28,7 +42,7 @@ let
       # if DETERMINISTIC_BUILD env var is set
       ./deterministic-build.patch
     ];
-    
+
   preConfigure = ''
       # Purity.
       for i in /usr /sw /opt /pkg; do
@@ -44,12 +58,19 @@ let
       touch $out/lib/python${majorVersion}/config/Makefile
       mkdir -p $out/include/python${majorVersion}
       touch $out/include/python${majorVersion}/pyconfig.h
+    '' + optionalString stdenv.isDarwin ''
+      substituteInPlace configure --replace '`/usr/bin/arch`' '"i386"'
     '';
 
   buildInputs =
     optional (stdenv ? cc && stdenv.cc.libc != null) stdenv.cc.libc ++
-    [ bzip2 openssl ] ++ optionals includeModules [ db openssl ncurses gdbm libX11 readline x11 tcl tk sqlite ]
-    ++ optional zlibSupport zlib;
+    [ bzip2 openssl ]
+    ++ optionals includeModules (
+        [ db gdbm ncurses sqlite readline
+        ] ++ optionals x11Support [ tcl tk x11 libX11 ]
+    )
+    ++ optional zlibSupport zlib
+    ++ optionals stdenv.isDarwin [ configd corefoundation ];
 
   # Build the basic Python interpreter without modules that have
   # external dependencies.
@@ -63,7 +84,7 @@ let
     C_INCLUDE_PATH = concatStringsSep ":" (map (p: "${p}/include") buildInputs);
     LIBRARY_PATH = concatStringsSep ":" (map (p: "${p}/lib") buildInputs);
 
-    configureFlags = "--enable-shared --with-threads --enable-unicode";
+    configureFlags = "--enable-shared --with-threads --enable-unicode" + stdenv.lib.optionalString stdenv.isDarwin " --disable-toolbox-glue";
 
     NIX_CFLAGS_COMPILE = optionalString stdenv.isDarwin "-msse2";
     DETERMINISTIC_BUILD = 1;
@@ -87,7 +108,7 @@ let
         ln -s $out/share/man/man1/{python2.7.1.gz,python.1.gz}
 
         paxmark E $out/bin/python${majorVersion}
-        
+
         ${ optionalString includeModules "$out/bin/python ./setup.py build_ext"}
       '';
 
@@ -192,10 +213,14 @@ let
       deps = [ sqlite ];
     };
 
+  } // optionalAttrs x11Support {
+
     tkinter = buildInternalPythonModule {
       moduleName = "tkinter";
       deps = [ tcl tk x11 libX11 ];
     };
+
+  } // {
 
     readline = buildInternalPythonModule {
       moduleName = "readline";

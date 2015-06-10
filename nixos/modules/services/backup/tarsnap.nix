@@ -5,20 +5,21 @@ with lib;
 let
   cfg = config.services.tarsnap;
 
-  optionalNullStr = e: v: if e == null then "" else v;
-
   configFile = cfg: ''
     cachedir ${config.services.tarsnap.cachedir}
     keyfile  ${config.services.tarsnap.keyfile}
     ${optionalString cfg.nodump "nodump"}
     ${optionalString cfg.printStats "print-stats"}
     ${optionalString cfg.printStats "humanize-numbers"}
-    ${optionalNullStr cfg.checkpointBytes "checkpoint-bytes "+cfg.checkpointBytes}
+    ${optionalString (cfg.checkpointBytes != null) ("checkpoint-bytes "+cfg.checkpointBytes)}
     ${optionalString cfg.aggressiveNetworking "aggressive-networking"}
     ${concatStringsSep "\n" (map (v: "exclude "+v) cfg.excludes)}
     ${concatStringsSep "\n" (map (v: "include "+v) cfg.includes)}
     ${optionalString cfg.lowmem "lowmem"}
     ${optionalString cfg.verylowmem "verylowmem"}
+    ${optionalString (cfg.maxbw != null) ("maxbw "+toString cfg.maxbw)}
+    ${optionalString (cfg.maxbwRateUp != null) ("maxbw-rate-up "+toString cfg.maxbwRateUp)}
+    ${optionalString (cfg.maxbwRateDown != null) ("maxbw-rate-down "+toString cfg.maxbwRateDown)}
   '';
 in
 {
@@ -166,6 +167,33 @@ in
                   slowing down the archiving process.
                 '';
               };
+
+              maxbw = mkOption {
+                type = types.nullOr types.int;
+                default = null;
+                description = ''
+                  Abort archival if upstream bandwidth usage in bytes
+                  exceeds this threshold.
+                '';
+              };
+
+              maxbwRateUp = mkOption {
+                type = types.nullOr types.int;
+                default = null;
+                example = literalExample "25 * 1000";
+                description = ''
+                  Upload bandwidth rate limit in bytes.
+                '';
+              };
+
+              maxbwRateDown = mkOption {
+                type = types.nullOr types.int;
+                default = null;
+                example = literalExample "50 * 1000";
+                description = ''
+                  Download bandwidth rate limit in bytes.
+                '';
+              };
             };
           }
         ));
@@ -221,6 +249,8 @@ in
       script = ''
         mkdir -p -m 0755 ${dirOf cfg.cachedir}
         mkdir -p -m 0700 ${cfg.cachedir}
+        chown root:root ${cfg.cachedir}
+        chmod 0700 ${cfg.cachedir}
         DIRS=`cat /etc/tarsnap/$1.dirs`
         exec tarsnap --configfile /etc/tarsnap/$1.conf -c -f $1-$(date +"%Y%m%d%H%M%S") $DIRS
       '';

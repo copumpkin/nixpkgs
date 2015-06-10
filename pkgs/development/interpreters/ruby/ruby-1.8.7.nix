@@ -5,6 +5,7 @@
 , ncurses, readline, cursesSupport ? true
 , groff, docSupport ? false
 , ruby_1_8_7, autoreconfHook, bison, useRailsExpress ? true
+, libiconv, libobjc
 }:
 
 let
@@ -32,12 +33,14 @@ stdenv.mkDerivation rec {
   # Have `configure' avoid `/usr/bin/nroff' in non-chroot builds.
   NROFF = "${groff}/bin/nroff";
 
-  buildInputs = ops useRailsExpress [ autoreconfHook bison ]
+  buildInputs = [libiconv]
+    ++ (ops useRailsExpress [ autoreconfHook bison ] )
     ++ (ops cursesSupport [ ncurses readline ] )
     ++ (op docSupport groff )
     ++ (op zlibSupport zlib)
     ++ (op opensslSupport openssl)
-    ++ (op gdbmSupport gdbm);
+    ++ (op gdbmSupport gdbm)
+    ++ (op stdenv.isDarwin libobjc);
 
   patches = ops useRailsExpress [
     "${patchSet}/patches/ruby/1.8.7/p374/railsexpress/01-ignore-generated-files.patch"

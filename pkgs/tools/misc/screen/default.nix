@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, ncurses, pam ? null }:
+{ stdenv, fetchurl, ncurses, pam ? null, utmp }:
 
 stdenv.mkDerivation rec {
   name = "screen-4.2.1";
@@ -13,7 +13,9 @@ stdenv.mkDerivation rec {
     sed -i -e "s|/usr/local|/non-existent|g" -e "s|/usr|/non-existent|g" configure Makefile.in */Makefile.in
   '';
 
-  buildInputs = [ ncurses ] ++ stdenv.lib.optional stdenv.isLinux pam;
+  buildInputs = [ ncurses ]
+    ++ stdenv.lib.optional stdenv.isLinux pam
+    ++ stdenv.lib.optional stdenv.isDarwin utmp;
 
   doCheck = true;
 

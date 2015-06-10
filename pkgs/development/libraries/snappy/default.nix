@@ -19,7 +19,7 @@ stdenv.mkDerivation rec {
   # -DNDEBUG for speed
   configureFlags = [ "CXXFLAGS=-DNDEBUG" ];
 
-  doCheck = true;
+  doCheck = !stdenv.isDarwin;
 
   meta = with stdenv.lib; {
     homepage = http://code.google.com/p/snappy/;

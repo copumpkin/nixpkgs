@@ -43,7 +43,8 @@ stdenv.mkDerivation rec {
 
   installFlags = "sysconfdir=$(out)/etc";
 
-  doInstallCheck = true;
+  doCheck        = !stdenv.isDarwin;
+  doInstallCheck = !stdenv.isDarwin;
 
   crossAttrs = {
     postUnpack =

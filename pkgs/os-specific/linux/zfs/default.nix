@@ -1,17 +1,14 @@
 { callPackage, fetchFromGitHub, ... } @ args:
 
 callPackage ./generic.nix (args // rec {
-  version = "0.6.3-1.3";
+  version = "0.6.4.1";
 
   src = fetchFromGitHub {
     owner = "zfsonlinux";
     repo = "zfs";
     rev = "zfs-${version}";
-    sha256 = "08m5ah8a6zp96djz2xj9rb94zq973dwwfpc26jy0adzdq2q20zb4";
+    sha256 = "15fh1b2rvzvx4j3vgkwrgy2sd553bzwcvk1zai6phjhb6i2rw8v4";
   };
 
-  patches = [
-    ./mount_zfs_prefix.patch
-    ./nix-build.patch # Remove in >=0.6.4
-  ];
+  patches = [ ./nix-build.patch ];
 })

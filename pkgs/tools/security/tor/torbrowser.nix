@@ -20,13 +20,13 @@ let
 
 in stdenv.mkDerivation rec {
   name = "tor-browser-${version}";
-  version = "4.0.4";
+  version = "4.5";
 
   src = fetchurl {
     url = "https://archive.torproject.org/tor-package-archive/torbrowser/${version}/tor-browser-linux${bits}-${version}_en-US.tar.xz";
     sha256 = if bits == "64" then
-      "0f0a07905daaf714322bc54cf25ed0e3b8ef91aeb937ab0df2d39010c9ee7b82" else
-      "f527b85a057ae402fa1dc84e6c175071e6448300cd2ebdd0d50494e1dd605185";
+      "15scfjzpbih7pzpqh4jd7jmc9g93sx2myfs6ykr70f5hbc7qhwmg" else
+      "0lrvhka3z9bh0snplsnxshs8i9iww187ipfn7f96hp5rxgl30p49";
   };
 
   patchPhase = ''

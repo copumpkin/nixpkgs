@@ -1,12 +1,12 @@
-{ stdenv, fetchurl, autoconf, libjpeg, libpng12, libX11, zlib }:
+{ stdenv, fetchurl, autoreconfHook, libjpeg, libpng12, libX11, zlib }:
 
-let version = "3.5.0.30"; in
+let version = "3.5.0.31"; in
 stdenv.mkDerivation {
   name = "libxcomp-${version}";
 
   src = fetchurl {
     url = "http://code.x2go.org/releases/source/nx-libs/nx-libs-${version}-full.tar.gz";
-    sha256 = "0npwlfv9p5fwnf30fpkfw08mq11pgbvp3d2zgnhh8ykf3yj8dgv0";
+    sha256 = "0a31508wyfyblf6plag2djr4spra5kylcmgg99h83c60ylxxnc11";
   };
 
   meta = with stdenv.lib; {
@@ -17,11 +17,10 @@ stdenv.mkDerivation {
     maintainers = with maintainers; [ nckx ];
   };
 
-  buildInputs = [ autoconf libjpeg libpng12 libX11 zlib ];
+  buildInputs = [ autoreconfHook libjpeg libpng12 libX11 zlib ];
 
-  preConfigure = ''
+  preAutoreconf = ''
     cd nxcomp/
-    autoconf
   '';
 
   enableParallelBuilding = true;

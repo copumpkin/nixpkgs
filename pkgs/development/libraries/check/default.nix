@@ -1,4 +1,4 @@
-{ fetchurl, stdenv }:
+{ fetchurl, stdenv, CoreServices }:
 
 let version = "0.9.14"; in
 stdenv.mkDerivation {
@@ -8,6 +8,8 @@ stdenv.mkDerivation {
     url = "mirror://sourceforge/check/${version}/check-${version}.tar.gz";
     sha256 = "02l4g79d81s07hzywcv1knwj5dyrwjiq2pgxaz7kidxi8m364wn2";
   };
+
+  buildInputs = stdenv.lib.optional stdenv.isDarwin CoreServices;
 
   # Test can randomly fail: http://hydra.nixos.org/build/7243912
   doCheck = false;

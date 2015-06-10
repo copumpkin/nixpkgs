@@ -1,5 +1,6 @@
 { stdenv, stdenvAdapters, fetchurl, pkgconfig, intltool, flex, bison
 , python, libxml2Python, file, expat, makedepend, xorg, llvm, libffi, libvdpau
+, OpenGL, Xplugin
 , enableTextureFloats ? false # Texture floats are patented, see docs/patents.txt
 , enableExtraFeatures ? false # not maintained
 }:
@@ -21,7 +22,7 @@ let
       intltool expat libxml2Python llvm
       presentproto
       libX11 libXext libxcb libXt libxshmfence
-      libffi libvdpau
+      libffi libvdpau OpenGL Xplugin
     ];
 
     postUnpack = ''

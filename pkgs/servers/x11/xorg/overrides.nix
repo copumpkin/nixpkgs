@@ -1,7 +1,7 @@
 { args, xorg }:
 
 let
-  inherit (args) stdenv;
+  inherit (args) stdenv makeWrapper;
   inherit (stdenv) lib isDarwin;
   inherit (lib) overrideDerivation;
 
@@ -79,8 +79,17 @@ in
     nativeBuildInputs = [ args.python ];
   };
 
+  libxkbfile = attrs: attrs // {
+    patches = lib.optional (stdenv.cc.cc.isClang or false) ./libxkbfile-clang36.patch;
+  };
+
   libpciaccess = attrs : attrs // {
     patches = [ ./libpciaccess-apple.patch ];
+  };
+
+  libAppleWM = attrs@{ buildInputs ? [], ... } : attrs // {
+    buildInputs = buildInputs ++ stdenv.lib.optionals stdenv.isDarwin
+      (with args.frameworks; [ CoreServices ApplicationServices ]);
   };
 
   libX11 = attrs: attrs // {
@@ -266,7 +275,9 @@ in
   xorgserver = with xorg; attrs: attrs //
     (let
       version = (builtins.parseDrvName attrs.name).version;
-      commonBuildInputs = attrs.buildInputs ++ [ xtrans ];
+      commonBuildInputs = attrs.buildInputs ++ [ xtrans ] ++
+        stdenv.lib.optionals stdenv.isDarwin
+          (with args.frameworks; [ Carbon Foundation Cocoa CoreData CoreAudio args.libobjc args.Xplugin ]);
       commonPropagatedBuildInputs = [
         args.zlib args.mesa args.dbus.libs
         xf86bigfontproto glproto xf86driproto
@@ -296,13 +307,14 @@ in
     in
       if (!isDarwin)
       then {
-        buildInputs = commonBuildInputs;
+        buildInputs = [ makeWrapper ] ++ commonBuildInputs;
         propagatedBuildInputs = commonPropagatedBuildInputs ++ lib.optionals stdenv.isLinux [
           args.udev
         ];
         patches = commonPatches;
         configureFlags = [
           "--enable-kdrive"             # not built by default
+          "--enable-xephyr"
           "--enable-xcsecurity"         # enable SECURITY extension
           "--with-default-font-path="   # there were only paths containing "${prefix}",
                                         # and there are no fonts in this package anyway
@@ -310,6 +322,9 @@ in
         postInstall = ''
           rm -fr $out/share/X11/xkb/compiled
           ln -s /var/tmp $out/share/X11/xkb/compiled
+          wrapProgram $out/bin/Xephyr \
+            --set XKB_BINDIR "${xorg.xkbcomp}/bin" \
+            --add-flags "-xkbdir ${xorg.xkeyboardconfig}/share/X11/xkb"
         '';
         passthru.version = version; # needed by virtualbox guest additions
       } else {

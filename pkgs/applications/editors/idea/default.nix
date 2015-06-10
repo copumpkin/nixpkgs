@@ -63,9 +63,11 @@ let
       item=${desktopItem}
 
       makeWrapper "$out/$name/bin/${loName}.sh" "$out/bin/${execName}" \
-        --prefix PATH : "$out/libexec/${name},${jdk}/bin:${coreutils}/bin:${gnugrep}/bin:${which}/bin:${git}/bin" \
-        --prefix JDK_HOME : "$jdk" \
-        --prefix ${hiName}_JDK : "$jdk"
+        --prefix PATH : "$out/libexec/${name}:${jdk}/bin:${coreutils}/bin:${gnugrep}/bin:${which}/bin:${git}/bin" \
+        --set JDK_HOME "$jdk" \
+        --set ${hiName}_JDK "$jdk" \
+        --set ANDROID_JAVA_HOME "$jdk" \
+        --set JAVA_HOME "$jdk"
 
       ln -s "$item/share/applications" $out/share
     '';
@@ -160,6 +162,23 @@ let
       };
     });
 
+  buildWebStorm = { name, version, build, src, license, description }:
+    (mkIdeaProduct {
+      inherit name version build src;
+      product = "WebStorm";
+      meta = with stdenv.lib; {
+        homepage = "https://www.jetbrains.com/webstorm/";
+        inherit description license;
+        longDescription = ''
+          WebStorm provides an editor for HTML, JavaScript (incl. Node.js),
+          and CSS with on-the-fly code analysis, error prevention and
+          automated refactorings for JavaScript code.
+        '';
+        maintainers = with maintainers; [ abaldeau ];
+        platforms = platforms.linux;
+      };
+    });
+
   buildPycharm = { name, version, build, src, license, description }:
     (mkIdeaProduct rec {
       inherit name version build src;
@@ -193,86 +212,86 @@ in
 
   android-studio = buildAndroidStudio rec {
     name = "android-studio-${version}";
-    version = "1.1.0";
-    build = "135.1740770";
+    version = "1.2.0.12";
+    build = "141.1890965";
     description = "Android development environment based on IntelliJ IDEA";
     license = stdenv.lib.licenses.asl20;
     src = fetchurl {
       url = "https://dl.google.com/dl/android/studio/ide-zips/${version}" +
             "/android-studio-ide-${build}-linux.zip";
-      sha256 = "1r2hrld3yfaxq3mw2xmzhvrrhc7w5xlv3d18rv758hy9n40c2nr1";
+      sha256 = "01k96rql192ksnprc4yai97fcals7msf06m9bx1q7asn46887h7n";
     };
   };
 
   clion = buildClion rec {
     name = "clion-${version}";
-    version = "eap";
-    build = "140.1740.3";
-    description  = "C/C++ IDE. New. Intelligent. Cross-platform.";
+    version = "1.0";
+    build = "141.353";
+    description  = "C/C++ IDE. New. Intelligent. Cross-platform";
     license = stdenv.lib.licenses.unfree;
     src = fetchurl {
-      url = "https://download.jetbrains.com/cpp/${name}-${build}.tar.gz";
-      sha256 = "1hpsq37hq61id836wg5j6l3xapln6qdkqa10r3ig2p1rs2hq7i9y";
+      url = "https://download.jetbrains.com/cpp/${name}.tar.gz";
+      sha256 = "0xjdx13ljp1vy51a7rsj25wg3bsvry4kxq5cdng8zrc1g2y1fqw5";
     };
   };
 
   idea-community = buildIdea rec {
     name = "idea-community-${version}";
-    version = "14.0.3";
-    build = "IC-139.1117";
+    version = "14.1.2";
+    build = "IC-141.713.2";
     description = "Integrated Development Environment (IDE) by Jetbrains, community edition";
     license = stdenv.lib.licenses.asl20;
     src = fetchurl {
       url = "https://download.jetbrains.com/idea/ideaIC-${version}.tar.gz";
-      sha256 = "01wcpzdahkh3li2l3k2bgirnlp7hdxk9y1kyrxc3d9d1nazq8wqn";
+      sha256 = "1skxbax7gsxxf7519qasxwp9q0v9ff755ibqr1w47dv2al47kjzq";
     };
   };
 
   idea-ultimate = buildIdea rec {
     name = "idea-ultimate-${version}";
-    version = "14.0.3";
-    build = "IU-139.1117";
+    version = "14.1.2";
+    build = "IU-141.713.2";
     description = "Integrated Development Environment (IDE) by Jetbrains, requires paid license";
     license = stdenv.lib.licenses.unfree;
     src = fetchurl {
       url = "https://download.jetbrains.com/idea/ideaIU-${version}.tar.gz";
-      sha256 = "1zkqigdh9l1f3mjjvxsp7b7vc93v5ylvxa1dfpclzmfbzna7h69s";
+      sha256 = "1ddy0f83rs3yx3w8v49cmlhkc8qxapdh702g26gzlapbpvfw58ay";
     };
   };
 
   ruby-mine = buildRubyMine rec {
     name = "ruby-mine-${version}";
-    version = "7.0";
-    build = "135.1104";
+    version = "7.0.4";
+    build = "139.1231";
     description = "The Most Intelligent Ruby and Rails IDE";
     license = stdenv.lib.licenses.unfree;
     src = fetchurl {
       url = "https://download.jetbrains.com/ruby/RubyMine-${version}.tar.gz";
-      sha256 = "0xsx44gaddarkw5k4yjidzwkayf2xvsxklfzdnzcck4rg4vyk4v4";
+      sha256 = "08b0iwccb5w9b1yk0kbs99r5mxkcyxqs9mkr57wb5j71an80yx38";
     };
   };
 
   pycharm-community = buildPycharm rec {
     name = "pycharm-community-${version}";
-    version = "4.0.5";
-    build = "139.1547";
+    version = "4.0.6";
+    build = "139.1659";
     description = "PyCharm 4.0 Community Edition";
     license = stdenv.lib.licenses.asl20;
     src = fetchurl {
       url = "https://download.jetbrains.com/python/${name}.tar.gz";
-      sha256 = "16na04sp9q7z10kjx8wpf9k9bv9vgv7rmd9jnrn72nhwd7bp0n1i";
+      sha256 = "16lf2slssfgbds6zyp2rs0ssrg8aw5d2w7b755iqimiyfhyyv83s";
     };
   };
 
   pycharm-professional = buildPycharm rec {
     name = "pycharm-professional-${version}";
-    version = "4.0.5";
-    build = "139.1547";
+    version = "4.0.6";
+    build = "139.1659";
     description = "PyCharm 4.0 Professional Edition";
     license = stdenv.lib.licenses.unfree;
     src = fetchurl {
       url = "https://download.jetbrains.com/python/${name}.tar.gz";
-      sha256 = "17cxznv7q47isym6l7kbp3jdzdgj02jayygy42x4bwjmg579v1gg";
+      sha256 = "0wavw41nzqnx75y3k3l5kq09i5d9j8hb4r6a0y3nxzqvmdfza55r";
     };
   };
 
@@ -285,6 +304,18 @@ in
     src = fetchurl {
       url = "https://download.jetbrains.com/webide/PhpStorm-${version}.tar.gz";
       sha256 = "1x67nfr3nap93cx7yhdrp02xvp1v6g74zy7hdmhx41sal7hzy49b";
+    };
+  };
+
+  webstorm = buildWebStorm rec {
+    name = "webstorm-${version}";
+    version = "10.0.2";
+    build = "141.728";
+    description = "Professional IDE for Web and JavaScript devlopment";
+    license = stdenv.lib.licenses.unfree;
+    src = fetchurl {
+      url = "https://download.jetbrains.com/webstorm/WebStorm-${version}.tar.gz";
+      sha256 = "0ghv1r145qb5kmp2x375f5674b86d51w024fz390znlnniclizqx";
     };
   };
 

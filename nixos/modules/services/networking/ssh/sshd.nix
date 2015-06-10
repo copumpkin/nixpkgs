@@ -9,12 +9,6 @@ let
 
   nssModulesPath = config.system.nssModules.path;
 
-  permitRootLoginCheck = v:
-    v == "yes" ||
-    v == "without-password" ||
-    v == "forced-commands-only" ||
-    v == "no";
-
   knownHosts = map (h: getAttr h cfg.knownHosts) (attrNames cfg.knownHosts);
 
   knownHostsText = flip (concatMapStringsSep "\n") knownHosts
@@ -116,12 +110,9 @@ in
 
       permitRootLogin = mkOption {
         default = "without-password";
-        type = types.addCheck types.str permitRootLoginCheck;
+        type = types.enum ["yes" "without-password" "forced-commands-only" "no"];
         description = ''
-          Whether the root user can login using ssh. Valid values are
-          <literal>yes</literal>, <literal>without-password</literal>,
-          <literal>forced-commands-only</literal> or
-          <literal>no</literal>.
+          Whether the root user can login using ssh.
         '';
       };
 
@@ -290,10 +281,8 @@ in
 
   config = mkIf cfg.enable {
 
-    users.extraUsers = singleton
-      { name = "sshd";
-        uid = config.ids.uids.sshd;
-        description = "SSH privilege separation user";
+    users.extraUsers.sshd =
+      { description = "SSH privilege separation user";
         home = "/var/empty";
       };
 
@@ -388,7 +377,7 @@ in
           Port ${toString port}
         '') cfg.ports}
 
-        ${concatMapStrings ({ port, addr }: ''
+        ${concatMapStrings ({ port, addr, ... }: ''
           ListenAddress ${addr}${if port != null then ":" + toString port else ""}
         '') cfg.listenAddresses}
 
@@ -427,7 +416,7 @@ in
                     (data.publicKey != null && data.publicKeyFile == null);
         message = "knownHost ${name} must contain either a publicKey or publicKeyFile";
       })
-      ++ flip map cfg.listenAddresses ({ addr, port }: {
+      ++ flip map cfg.listenAddresses ({ addr, port, ... }: {
         assertion = addr != null;
         message = "addr must be specified in each listenAddresses entry";
       });

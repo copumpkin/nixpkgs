@@ -8,7 +8,10 @@ stdenv.mkDerivation (rec {
     sha256 = "0zvm9afh1skxgdv62ylrpwyykpjhhskxj0zv7yrdf7jhfdriz0y3";
   };
 
-  buildInputs = [ popt ];
+  buildInputs = [ popt libiconv ];
+
+  # natspec.h has an #include <iconv.h> in it
+  propagatedBuildInputs = [ libiconv ];
 
   meta = {
     homepage = http://natspec.sourceforge.net/ ;
@@ -17,7 +20,5 @@ stdenv.mkDerivation (rec {
     maintainers = [ stdenv.lib.maintainers.urkud ];
   };
 } // stdenv.lib.optionalAttrs (!stdenv.isLinux) {
-  NIX_CFLAGS_COMPILE = "-I${libiconv}/include";
-
-  NIX_CFLAGS_LINK = "-L${libiconv}/lib -liconv";
+  NIX_CFLAGS_LINK = "-liconv";
 })

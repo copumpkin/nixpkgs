@@ -25,7 +25,9 @@ preConfigure() {
         fi
     done
 
-    perl Makefile.PL PREFIX=$out INSTALLDIRS=site $makeMakerFlags
+    # The makemaker defaults to writing "LD = env MACOSX_DEPLOYMENT_TARGET=10.3 cc" and
+    # we want better control over the deployment target, so let's set it to just cc
+    perl Makefile.PL PREFIX=$out INSTALLDIRS=site $makeMakerFlags LD=cc
 }
 
 postFixup() {

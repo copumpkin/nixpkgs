@@ -21,6 +21,8 @@ in stdenv.mkDerivation rec {
 
   buildInputs = [ ghc perl gmp ncurses ];
 
+  enableParallelBuilding = true;
+
   buildMK = ''
     libraries/integer-gmp_CONFIGURE_OPTS += --configure-option=--with-gmp-libraries="${gmp}/lib"
     libraries/integer-gmp_CONFIGURE_OPTS += --configure-option=--with-gmp-includes="${gmp}/include"

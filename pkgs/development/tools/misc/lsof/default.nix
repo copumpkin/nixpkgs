@@ -1,4 +1,4 @@
-{stdenv, fetchurl}:
+{stdenv, fetchurl, ncurses}:
 
 stdenv.mkDerivation {
   name = "lsof-4.87";
@@ -11,11 +11,19 @@ stdenv.mkDerivation {
   unpackPhase = "tar xvjf $src; cd lsof_*; tar xvf lsof_*.tar; sourceRoot=$( echo lsof_*/); ";
   
   preBuild = "sed -i Makefile -e 's/^CFGF=/&	-DHASIPv6=1/;';";
-  
-  configurePhase = if stdenv.isDarwin
-    then "./Configure -n darwin;"
-    else "./Configure -n linux;";
-  
+
+  preConfigure = if stdenv.isDarwin then ''
+    sed -i 's|-lcurses|-lncurses|' ./Configure
+  '' else null;
+
+  configureScript = "./Configure";
+
+  configureFlags = [ "-n" (if stdenv.isDarwin then "darwin" else "linux") ];
+
+  dontAddPrefix = true;
+
+  buildInputs = [ ncurses ];
+
   installPhase = ''
     mkdir -p $out/bin $out/man/man8
     cp lsof.8 $out/man/man8/

@@ -15,10 +15,12 @@
 , libelf                      # optional, for link-time optimizations (LTO)
 , cloog ? null, isl ? null # optional, for the Graphite optimization framework.
 , zlib ? null, boehmgc ? null
-, zip ? null, unzip ? null, pkgconfig ? null, gtk ? null, libart_lgpl ? null
+, zip ? null, unzip ? null, pkgconfig ? null
+, gtk ? null, libart_lgpl ? null
 , libX11 ? null, libXt ? null, libSM ? null, libICE ? null, libXtst ? null
 , libXrender ? null, xproto ? null, renderproto ? null, xextproto ? null
 , libXrandr ? null, libXi ? null, inputproto ? null, randrproto ? null
+, x11Support ? langJava
 , gnatboot ? null
 , enableMultilib ? false
 , enablePlugin ? true             # whether to support user-supplied plug-ins
@@ -91,7 +93,7 @@ let version = "4.8.4";
       xproto renderproto xextproto inputproto randrproto
     ];
 
-    javaAwtGtk = langJava && gtk != null;
+    javaAwtGtk = langJava && x11Support;
 
     /* Platform flags */
     platformFlags = let
@@ -200,7 +202,7 @@ let version = "4.8.4";
 in
 
 # We need all these X libraries when building AWT with GTK+.
-assert gtk != null -> (filter (x: x == null) xlibs) == [];
+assert x11Support -> (filter (x: x == null) ([ gtk libart_lgpl ] ++ xlibs)) == [];
 
 stdenv.mkDerivation ({
   name = "${name}${if stripped then "" else "-debug"}-${version}" + crossNameAddon;
@@ -213,6 +215,12 @@ stdenv.mkDerivation ({
   };
 
   inherit patches;
+
+  prePatch = if stdenv.isDarwin then
+    ''
+      substituteInPlace gcc/config/darwin-c.c \
+        --replace "add_system_framework_path (str);" ""
+    '' else null;
 
   postPatch =
     if (stdenv.isGNU
@@ -284,10 +292,6 @@ stdenv.mkDerivation ({
     ++ (optionals (cross != null) [binutilsCross])
     ++ (optionals langAda [gnatboot])
     ++ (optionals langVhdl [gnat])
-
-    # The builder relies on GNU sed (for instance, Darwin's `sed' fails with
-    # "-i may not be used with stdin"), and `stdenvNative' doesn't provide it.
-    ++ (optional stdenv.isDarwin gnused)
     ;
 
   NIX_LDFLAGS = stdenv.lib.optionalString  stdenv.isSunOS "-lm -ldl";
@@ -298,14 +302,7 @@ stdenv.mkDerivation ({
     export CXXFLAGS_FOR_TARGET="-Wl,-rpath,$prefix/lib/amd64 $CXXFLAGS_FOR_TARGET"
     export CFLAGS_FOR_TARGET="-Wl,-rpath,$prefix/lib/amd64 $CFLAGS_FOR_TARGET"
   '' + stdenv.lib.optionalString stdenv.isDarwin ''
-    if SDKROOT=$(/usr/bin/xcrun --show-sdk-path); then
-      configureFlagsArray+=(--with-native-system-header-dir=$SDKROOT/usr/include)
-      makeFlagsArray+=( \
-       CFLAGS_FOR_BUILD=-F$SDKROOT/System/Library/Frameworks \
-       CFLAGS_FOR_TARGET=-F$SDKROOT/System/Library/Frameworks \
-       FLAGS_FOR_TARGET=-F$SDKROOT/System/Library/Frameworks \
-      )
-    fi
+    configureFlagsArray+=(--with-native-system-header-dir=${stdenv.cc.libc}/include)
   '';
 
   dontDisableStatic = true;

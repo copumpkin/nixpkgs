@@ -4,6 +4,9 @@ with import ./lib.nix { inherit pkgs; };
 
 self: super: {
 
+  # Use the latest LLVM.
+  inherit (pkgs) llvmPackages;
+
   # Disable GHC 7.11.x core libraries.
   array = null;
   base = null;
@@ -40,14 +43,6 @@ self: super: {
   # haddock: No input file(s).
   nats = dontHaddock super.nats;
 
-  # These used to be core packages in GHC 7.8.x.
-  old-locale = self.old-locale_1_0_0_7;
-  old-time = self.old-time_1_1_0_3;
-
-  # We have transformers 4.x
-  mtl = self.mtl_2_2_1;
-  transformers-compat = disableCabalFlag super.transformers-compat "three";
-
   # We have time 1.5
   aeson = disableCabalFlag super.aeson "old-locale";
 
@@ -58,6 +53,8 @@ self: super: {
   utf8-string = overrideCabal super.utf8-string (drv: {
     patchPhase = "sed -i -e 's|base >= 3 && < 4.8|base|' utf8-string.cabal";
   });
+
+  bytestring-builder = dontHaddock super.bytestring-builder;
 
   # bos/attoparsec#92
   attoparsec = dontCheck super.attoparsec;
@@ -78,8 +75,61 @@ self: super: {
   # Version 1.19.5 fails its test suite.
   happy = dontCheck super.happy;
 
+  # Workaround for a workaround, see comment for "ghcjs" flag.
+  jsaddle = let jsaddle' = disableCabalFlag super.jsaddle "ghcjs";
+            in addBuildDepends jsaddle' [ self.glib self.gtk3 self.webkitgtk3
+                                          self.webkitgtk3-javascriptcore ];
+
+  # The compat library is empty in the presence of mtl 2.2.x.
+  mtl-compat = dontHaddock super.mtl-compat;
+
+  # Test suite fails in "/tokens_bytestring_unicode.g.bin".
+  alex = dontCheck super.alex;
+
   # Test suite hangs silently without consuming any CPU.
   # https://github.com/ndmitchell/extra/issues/4
   extra = dontCheck super.extra;
 
+  # pretty-printer bug causes spurious test failures
+  haskell-src-exts = dontCheck super.haskell-src-exts;
+
+  wreq = overrideCabal super.wreq (drv: {
+    patchPhase = ''
+      substituteInPlace Network/Wreq/Internal/AWS.hs --replace System.Locale Data.Time.Format
+      substituteInPlace Network/Wreq/Cache.hs \
+        --replace System.Locale Data.Time.Format \
+        --replace RecordWildCards "RecordWildCards, FlexibleContexts"
+    '';
+  });
+
+  smallcheck = overrideCabal super.smallcheck (drv: {
+    patchPhase = ''
+      substituteInPlace Test/SmallCheck/Property.hs \
+        --replace 'm ~ n' 'Monad n, m ~ n'
+    '';
+  });
+  contravariant = overrideCabal super.contravariant (drv: {
+    patchPhase = ''
+      substituteInPlace src/Data/Functor/Contravariant/Compose.hs \
+        --replace '<$>' '`fmap`'
+    '';
+  });
+  semigroupoids = appendPatch super.semigroupoids (pkgs.fetchpatch {
+    url = "https://github.com/ekmett/semigroupoids/commit/9d47b9f6591848543c71f901c581422d4b80a3de.patch";
+    sha256 = "0xq1hxj7yfd9196nwg2x9vqpx9nd68s5gbrkylpdfwicfaavvil0";
+  });
+  yesod-auth = overrideCabal super.yesod-auth (drv: {
+    patchPhase = ''
+      substituteInPlace Yesod/Auth/Email.hs --replace \
+        FlexibleContexts 'FlexibleContexts, ConstrainedClassMethods'
+    '';
+  });
+  mono-traversable = overrideCabal super.mono-traversable (drv: {
+    patchPhase = ''
+      substituteInPlace src/Data/MonoTraversable.hs --replace \
+        FlexibleContexts 'FlexibleContexts, ConstrainedClassMethods'
+      substituteInPlace src/Data/Sequences.hs --replace \
+        'c ~ Char' 'c ~ Char, IsString [c]'
+    '';
+  });
 }

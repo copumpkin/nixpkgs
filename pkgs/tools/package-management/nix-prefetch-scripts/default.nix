@@ -1,4 +1,5 @@
-{ stdenv, makeWrapper, git, subversion, mercurial, bazaar, cvs, unzip, curl, gnused }:
+{ stdenv, makeWrapper, git, subversion, mercurial, bazaar, cvs, unzip, curl, gnused,
+coreutils }:
 
 stdenv.mkDerivation {
   name = "nix-prefetch-scripts";
@@ -17,6 +18,7 @@ stdenv.mkDerivation {
         wrapArgs="$wrapArgs --prefix PATH : $dep/bin"
       done
       wrapArgs="$wrapArgs --prefix PATH : ${gnused}/bin"
+      wrapArgs="$wrapArgs --prefix PATH : ${coreutils}/bin"
       wrapArgs="$wrapArgs --set HOME : /homeless-shelter"
       wrapProgram $out/bin/$name $wrapArgs
     }

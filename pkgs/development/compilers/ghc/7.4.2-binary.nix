@@ -28,7 +28,7 @@ stdenv.mkDerivation rec {
       }
     else throw "cannot bootstrap GHC on this platform";
 
-  buildInputs = [perl];
+  buildInputs = [perl makeWrapper];
 
   postUnpack =
     # GHC has dtrace probes, which causes ld to try to open /usr/lib/libdtrace.dylib
@@ -41,7 +41,8 @@ stdenv.mkDerivation rec {
     # first. The GHC Cabal build system makes use of strip by default and
     # has hardcoded paths to /usr/bin/strip in many places. We replace
     # those below, making them point to our dummy script.
-     ''
+    ''
+
       mkdir "$TMP/bin"
       for i in strip; do
         echo '#! ${stdenv.shell}' > "$TMP/bin/$i"
@@ -124,5 +125,5 @@ stdenv.mkDerivation rec {
   '';
 
   meta.license = stdenv.lib.licenses.bsd3;
-  meta.platforms = ["x86_64-linux" "i686-linux" "i686-darwin" "x86_64-darwin"];
+  meta.platforms = ["x86_64-linux" "i686-linux" "x86_64-darwin"];
 }

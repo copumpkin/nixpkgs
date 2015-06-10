@@ -1,7 +1,6 @@
 { pkgs, stdenv, ghc
 , packageSetConfig ? (self: super: {})
 , overrides ? (self: super: {})
-, provideOldAttributeNames ? false
 }:
 
 with ./lib.nix;
@@ -54,15 +53,17 @@ let
 
         inherit mkDerivation callPackage;
 
-        ghcWithPackages = pkgs: callPackage ./with-packages-wrapper.nix { packages = pkgs self; };
+        ghcWithPackages = pkgs: callPackage ./with-packages-wrapper.nix {
+          inherit (self) llvmPackages;
+          packages = pkgs self;
+        };
 
         ghc = ghc // { withPackages = self.ghcWithPackages; };
 
       };
 
-  compatLayer = if provideOldAttributeNames then import ./compat-layer.nix else (self: super: {});
   commonConfiguration = import ./configuration-common.nix { inherit pkgs; };
 
 in
 
-  fix (extend (extend (extend (extend haskellPackages commonConfiguration) packageSetConfig) overrides) compatLayer)
+  fix (extend (extend (extend haskellPackages commonConfiguration) packageSetConfig) overrides)

@@ -1,6 +1,6 @@
 { stdenv, fetchurl, ghc, perl, gmp, ncurses, libiconv }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (rec {
   version = "7.8.4";
   name = "ghc-${version}";
 
@@ -38,15 +38,13 @@ stdenv.mkDerivation rec {
   # that in turn causes GHCi to abort
   stripDebugFlags = [ "-S" ] ++ stdenv.lib.optional (!stdenv.isDarwin) "--keep-file-symbols";
 
-  meta = with stdenv.lib; {
+  meta = {
     homepage = "http://haskell.org/ghc";
     description = "The Glasgow Haskell Compiler";
-    maintainers = [ maintainers.marcweber maintainers.andres maintainers.simons ];
-    inherit (ghc.meta) license;
-    # Filter old "i686-darwin" platform which is unsupported these days.
-    platforms = filter (x: elem x platforms.all) ghc.meta.platforms;
-    # Disable Darwin builds: <https://github.com/NixOS/nixpkgs/issues/2689>.
-    hydraPlatforms = filter (x: !elem x platforms.darwin) meta.platforms;
+    maintainers = with stdenv.lib.maintainers; [ marcweber andres simons ];
+    inherit (ghc.meta) license platforms;
   };
 
-}
+} // stdenv.lib.optionalAttrs stdenv.isDarwin {
+  patches = [ ./hpc-7.8.4.patch ];
+})

@@ -13,14 +13,19 @@ stdenv.mkDerivation {
     md5 = "11aa15c8d3e28ee7815e0d5fcdf43fd4";
   };
 
+  patches = [ ./environment.patch ./getline.patch ./clang.patch ];
+
+  postPatch = ''
+    substituteInPlace ./configure \
+      --replace "*-darwin*" "willdefinitelynotmatch"
+  '';
+
   buildInputs = [ flex bison zlib libpng ncurses ed ];
 
   # fixes "error: conflicting types for 'calloc'", etc.
   preBuild = stdenv.lib.optionalString stdenv.isDarwin ''
     sed -i 57d texk/kpathsea/c-std.h
   '';
-
-  patches = [ ./environment.patch ./getline.patch ./clang.patch ];
 
   setupHook = ./setup-hook.sh;
 
@@ -35,6 +40,8 @@ stdenv.mkDerivation {
     mkdir -p $out/share/texmf
     mkdir -p $out/share/texmf-dist
     gunzip < $texmf | (cd $out/share/texmf-dist && tar xvf -)
+
+    substituteInPlace ./tetex-src-3.0/configure --replace /usr/bin/install $(type -P install)
   '';
 
   meta = with stdenv.lib; {
@@ -42,6 +49,7 @@ stdenv.mkDerivation {
     homepage     = http://www.tug.org/tetex/;
     matintainers = with maintainers; [ lovek323 ];
     platforms    = platforms.unix;
+    hydraPlatforms = platforms.linux;
   };
 }
 

@@ -1,4 +1,4 @@
-{stdenv, fetchurl, coq}:
+{stdenv, fetchurl, coq, ncurses}:
 
 assert coq.coq-version == "8.4";
 
@@ -11,7 +11,7 @@ stdenv.mkDerivation {
     sha256 = "0hm1ha7sxqfqhc7iwhx6zdz3nki4rj5nfd3ab24hmz8v7mlpinds";
   };
 
-  buildInputs = [ coq.ocaml coq.camlp5 ];
+  buildInputs = [ coq.ocaml coq.camlp5 ncurses ];
   propagatedBuildInputs = [ coq ];
 
   enableParallelBuilding = true;

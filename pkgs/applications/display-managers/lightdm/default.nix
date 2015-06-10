@@ -4,15 +4,15 @@
 }:
 
 let
-  ver_branch = "1.13";
-  version = "1.13.1";
+  ver_branch = "1.14";
+  version = "1.14.0";
 in
 stdenv.mkDerivation rec {
   name = "lightdm-${version}";
 
   src = fetchurl {
     url = "${meta.homepage}/${ver_branch}/${version}/+download/${name}.tar.xz";
-    sha256 = "0xa23maq6phkfil8xx26viig2m99sbzcf1w7s56hns2qw6pycn79";
+    sha256 = "0fkbzqncx34dhylrg5328fih7xywmsqj2p40smnx33nyf047jdgc";
   };
 
   buildInputs = [
@@ -27,16 +27,10 @@ stdenv.mkDerivation rec {
   ] ++ stdenv.lib.optional (qt4 != null) "--enable-liblightdm-qt"
     ++ stdenv.lib.optional (qt5 != null) "--enable-liblightdm-qt5";
 
-  installFlags = [ "DESTDIR=\${out}" ];
-
-  # Correct for the nested nix folder tree
-  postInstall = ''
-    mv $out/$out/* $out
-    DIR=$out/$out
-    while rmdir $DIR 2>/dev/null; do
-      DIR="$(dirname "$DIR")"
-    done
-  '';
+  installFlags = [
+    "sysconfdir=\${out}/etc"
+    "localstatedir=\${TMPDIR}"
+  ];
 
   meta = with stdenv.lib; {
     homepage = http://launchpad.net/lightdm;

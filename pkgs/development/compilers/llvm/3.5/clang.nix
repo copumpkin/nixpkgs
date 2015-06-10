@@ -25,8 +25,8 @@ in stdenv.mkDerivation {
   patches = [ ./clang-purity.patch ];
 
   postPatch = ''
-    sed -i -e 's/Args.hasArg(options::OPT_nostdlibinc)/true/' lib/Driver/Tools.cpp
-    sed -i -e 's/DriverArgs.hasArg(options::OPT_nostdlibinc)/true/' lib/Driver/ToolChains.cpp
+    substituteInPlace lib/Driver/Tools.cpp      --replace       "Args.hasArg(options::OPT_nostdlibinc)" "true"
+    substituteInPlace lib/Driver/ToolChains.cpp --replace "DriverArgs.hasArg(options::OPT_nostdlibinc)" "true"
   '';
 
   # Clang expects to find LLVMgold in its own prefix
@@ -39,7 +39,9 @@ in stdenv.mkDerivation {
 
   enableParallelBuilding = true;
 
-  passthru = stdenv.lib.optionalAttrs stdenv.isLinux {
+  passthru = {
+    isClang = true;
+  } // stdenv.lib.optionalAttrs stdenv.isLinux {
     inherit gcc;
   };
 

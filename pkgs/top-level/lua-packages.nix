@@ -7,7 +7,7 @@
 
 { fetchurl, stdenv, lua, callPackage, unzip, zziplib, pkgconfig, libtool
 , pcre, oniguruma, gnulib, tre, glibc, sqlite, openssl, expat, cairo
-, perl, gtk, python, glib, gobjectIntrospection, libevent
+, perl, gtk, python, glib, gobjectIntrospection, libevent, zlib
 }:
 
 let
@@ -74,7 +74,7 @@ let
 
     meta = with stdenv.lib; {
       homepage = http://luaforge.net/projects/luaevent/;
-      description = "Binding of libevent to Lua.";
+      description = "Binding of libevent to Lua";
       license = licenses.mit;
       maintainers = [ maintainers.koral ];
     };
@@ -205,6 +205,37 @@ let
     };
   };
 
+  luazlib = buildLuaPackage rec {
+    name = "zlib-${version}";
+    version = "0.4";
+
+    src = fetchurl {
+      url = "https://github.com/brimworks/lua-zlib/archive/v${version}.tar.gz";
+      sha256 = "1l32nwyh8b4vicxvlhbv9qhkhklbhvjfn8wd72bjk7ac9kz172rd";
+    };
+
+    buildInputs = [ zlib ];
+
+    preBuild = ''
+      makeFlagsArray=(
+        linux
+        LUAPATH="$out/share/lua/${lua.luaversion}"
+        LUACPATH="$out/lib/lua/${lua.luaversion}"
+        INCDIR="-I${lua}/include"
+        LIBDIR="-L$out/lib");
+    '';
+
+    preInstall = "mkdir -p $out/lib/lua/${lua.luaversion}";
+
+    meta = with stdenv.lib; {
+      homepage = https://github.com/brimworks/lua-zlib;
+      hydraPlatforms = platforms.linux;
+      license = licenses.mit;
+      maintainers = [ maintainers.koral ];
+    };
+  };
+      
+
   luastdlib = buildLuaPackage {
     name = "stdlib";
     src = fetchurl {
@@ -282,6 +313,12 @@ let
     };
     buildInputs = [ unzip ];
 
+    preBuild = ''
+      makeFlagsArray=(CC=$CC);
+    '';
+
+    buildFlags = if stdenv.isDarwin then "macosx" else "";
+
     installPhase = ''
       mkdir -p $out/lib/lua/${lua.luaversion}
       install -p lpeg.so $out/lib/lua/${lua.luaversion}
@@ -290,7 +327,7 @@ let
 
     meta = {
       homepage = "http://www.inf.puc-rio.br/~roberto/lpeg/";
-      hydraPlatforms = stdenv.lib.platforms.linux;
+      hydraPlatforms = stdenv.lib.platforms.all;
       license = stdenv.lib.licenses.mit;
     };
   };

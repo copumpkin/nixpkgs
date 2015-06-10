@@ -16,7 +16,14 @@ stdenv.mkDerivation rec {
     mkdir -p $out/Applications
     mkdir -p $out/bin
     cp -r terminal-notifier.app $out/Applications
-    ln -s $out/Applications/terminal-notifier.app/Contents/MacOS/terminal-notifier $out/bin/terminal-notifier
+
+    # this used to be a simple symlink, but OSX apps appear to use the executable path to
+    # try to find resource files
+    cat >$out/bin/terminal-notifier <<EOF
+    cd $out/Applications/terminal-notifier.app/Contents/MacOS
+    exec terminal-notifier "\$@"
+    EOF
+    chmod +x $out/bin/terminal-notifier
   '';
 
   meta = with lib; {

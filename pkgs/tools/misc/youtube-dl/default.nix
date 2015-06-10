@@ -1,18 +1,16 @@
-{ stdenv, fetchurl, python, zip, pandoc }:
+{ stdenv, fetchurl, makeWrapper, python, zip, pandoc, ffmpeg }:
 
-let
-  version = "2015.03.09";
-in
+with stdenv.lib;
 stdenv.mkDerivation rec {
   name = "youtube-dl-${version}";
+  version = "2015.04.03";
 
   src = fetchurl {
     url = "http://youtube-dl.org/downloads/${version}/${name}.tar.gz";
-    sha256 = "0mxpm79xdzzckc5rysjx17pxm9bldk7s13im7l9xd4pjrhy411xz";
+    sha256 = "0ndzswv6vq5ld5p1ny23sh76cx6acf8yli9gi9r21dm94ida2885";
   };
 
-  buildInputs = [ python ];
-  nativeBuildInputs = [ zip pandoc ];
+  buildInputs = [ python makeWrapper zip pandoc ];
 
   patchPhase = ''
     rm youtube-dl
@@ -22,13 +20,23 @@ stdenv.mkDerivation rec {
     makeFlagsArray=( PREFIX=$out SYSCONFDIR=$out/etc PYTHON=${python}/bin/python )
   '';
 
+  postInstall = ''
+    # ffmpeg is used for post-processing and fixups
+    wrapProgram $out/bin/youtube-dl --prefix PATH : "${ffmpeg}/bin"
+  '';
+
   meta = {
     homepage = "http://rg3.github.com/youtube-dl/";
     repositories.git = https://github.com/rg3/youtube-dl.git;
     description = "Command-line tool to download videos from YouTube.com and other sites";
-    license = stdenv.lib.licenses.unlicense;
-
-    platforms = with stdenv.lib.platforms; linux ++ darwin;
-    maintainers = with stdenv.lib.maintainers; [ bluescreen303 simons phreedom AndersonTorres fuuzetsu ];
+    longDescription = ''
+      youtube-dl is a small, Python-based command-line program
+      to download videos from YouTube.com and a few more sites.
+      youtube-dl is released to the public domain, which means
+      you can modify it, redistribute it or use it however you like.
+    '';
+    license = licenses.publicDomain;
+    platforms = with platforms; linux ++ darwin;
+    maintainers = with maintainers; [ bluescreen303 simons phreedom AndersonTorres fuuzetsu ];
   };
 }

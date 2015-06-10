@@ -1,6 +1,4 @@
-# XXX: this may need -liconv on non-glibc systems.. 
-
-{ stdenv, fetchFromGitHub, python, perl, autoconf, automake, libtool, intltool, flex, texinfo }:
+{ stdenv, fetchFromGitHub, python, perl, autoconf, automake, libtool, intltool, flex, texinfo, libiconv }:
 
 stdenv.mkDerivation rec {
   name = "recode-3.7-2fd838565";
@@ -12,7 +10,8 @@ stdenv.mkDerivation rec {
     sha256 = "06vyjqaraamcc5vka66mlvxj27ihccqc74aymv2wn8nphr2rhh03";
   };
 
-  nativeBuildInputs = [ python perl autoconf automake libtool intltool flex texinfo ];
+  nativeBuildInputs = [ python perl autoconf automake libtool intltool flex texinfo ]
+    ++ stdenv.lib.optional stdenv.isDarwin [libiconv];
 
   preConfigure = ''
     # fix build with new automake, https://bugs.gentoo.org/show_bug.cgi?id=419455
@@ -20,6 +19,8 @@ stdenv.mkDerivation rec {
     substituteInPlace Makefile.am --replace "ACLOCAL = ./aclocal.sh @ACLOCAL@" ""
     sed -i '/^AM_C_PROTOTYPES/d' configure.ac
     substituteInPlace src/Makefile.am --replace "ansi2knr" ""
+    substituteInPlace src/Makefile.in --replace "@ANSI2KNR@" "" \
+      --replace "@U@" ""
 
     autoreconf -fi
   ''

@@ -277,6 +277,7 @@ rec {
 
     extraAttrs = {
       inherit (stage4.pkgs) glibc;
+      libc = stage4.pkgs.glibc;
       inherit platform bootstrapTools;
       shellPackage = stage4.pkgs.bash;
     };

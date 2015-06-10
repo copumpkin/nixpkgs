@@ -14,18 +14,15 @@ stdenv.mkDerivation rec {
     ${gnused}/bin/sed -e '/^env[.]Append(BUILDERS/ienv.Append(ENV={"PATH":os.environ["PATH"]})' -i SConstruct
     ${gnused}/bin/sed -e '/^env[.]Append(BUILDERS/ienv.Append(ENV={"NIX_CFLAGS_COMPILE":os.environ["NIX_CFLAGS_COMPILE"]})' -i SConstruct
     ${gnused}/bin/sed -e '/^env[.]Append(BUILDERS/ienv.Append(ENV={"NIX_LDFLAGS":os.environ["NIX_LDFLAGS"]})' -i SConstruct
+    ${gnused}/bin/sed -e '/^env[.]Append(BUILDERS/ienv.Append(ENV={"TMPDIR":os.environ["TMPDIR"]})' -i SConstruct
   '';
 
   buildPhase = ''
     scons PREFIX="$out" OPENSSL="${openssl}" ZLIB="${zlib}" APR="$(echo "${apr}"/bin/*-config)" \
-        APU="$(echo "${aprutil}"/bin/*-config)" CC="${
-          if stdenv.isDarwin then "clang" else "${stdenv.cc}/bin/gcc"
-        }" ${
-          if stdenv.isDarwin then "" else "GSSAPI=\"${kerberos}\""
+        APU="$(echo "${aprutil}"/bin/*-config)" CC=cc ${
+          stdenv.lib.optionalString (!stdenv.isDarwin) "GSSAPI=\"${kerberos}\""
         }
   '';
-
-  NIX_CFLAGS_COMPILE = stdenv.lib.optionalString stdenv.isDarwin "-L/usr/lib";
 
   installPhase = ''
     scons install

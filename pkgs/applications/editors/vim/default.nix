@@ -1,19 +1,26 @@
-{ stdenv, fetchhg, ncurses, gettext, pkgconfig }:
+{ stdenv, fetchhg, ncurses, gettext, pkgconfig, libobjc, CoreServices, Cocoa, Foundation, CoreData }:
 
 stdenv.mkDerivation rec {
   name = "vim-${version}";
 
-  version = "7.4.410";
+  version = "7.4.683";
 
   src = fetchhg {
-    url = "https://vim.googlecode.com/hg/";
-    rev = "v7-4-410";
-    sha256 = "145llhj6gq2bh9b7p8xkxc388krrximq80b87f3cn4w4d4k9fhqp";
+    url = "https://code.google.com/p/vim/";
+    rev = "v7-4-663";
+    sha256 = "1z0qarf6a2smab28g9dnxklhfayn85wx48bnddmyhb9kqzjgqgjc";
   };
+
+  __impureHostDeps = [
+    "/System/Library/PrivateFrameworks/UIFoundation.framework/Versions/A/UIFoundation"
+    "/usr/lib/libextension.dylib"
+  ];
 
   enableParallelBuilding = true;
 
-  buildInputs = [ ncurses pkgconfig ];
+  buildInputs = [ ncurses pkgconfig ] ++ stdenv.lib.optionals stdenv.isDarwin [
+    CoreServices Cocoa Foundation CoreData libobjc
+  ];
   nativeBuildInputs = [ gettext ];
 
   configureFlags = [

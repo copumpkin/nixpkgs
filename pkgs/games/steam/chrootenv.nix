@@ -59,6 +59,8 @@ buildFHSUserEnv {
       pkgs.pulseaudio
 
       pkgs.flashplayer
+
+      pkgs.gst_all_1.gst-plugins-ugly # "Audiosurf 2" needs this
     ];
 
   extraBuildCommandsMulti = ''
@@ -71,5 +73,5 @@ buildFHSUserEnv {
     export LD_PRELOAD=/lib32/libpulse.so:/lib64/libpulse.so:/lib32/libasound.so:/lib64/libasound.so
   '';
 
-  runScript = "exec steam";
+  runScript = "steam";
 }

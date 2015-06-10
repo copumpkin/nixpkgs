@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, perl, ncurses, yacc, openssl, openldap }:
+{ stdenv, fetchurl, pkgconfig, perl, ncurses, yacc, openssl, openldap, bootstrap_cmds }:
 
 let
   pname = "krb5";
@@ -15,7 +15,9 @@ stdenv.mkDerivation (rec {
     sha256 = "0gk6jvr64rf6l4xcyxn8i3fr5d1j7dhqvwyv3vw2qdkzz7yjkxjd";
   };
 
-  buildInputs = [ pkgconfig perl ncurses yacc openssl openldap ];
+  buildInputs = [ pkgconfig perl ncurses yacc openssl openldap ]
+    # Provides the mig command used by the build scripts
+    ++ stdenv.lib.optional stdenv.isDarwin bootstrap_cmds ;
 
   unpackPhase = ''
     tar -xf $src

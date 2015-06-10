@@ -2,6 +2,7 @@
 , sslSupport, proxySupport ? true
 , apr, aprutil, pcre
 , ldapSupport ? true, openldap
+, libiconv
 , # Multi-processing module to use.  This is built into the server and
   # cannot be selected at runtime.
   mpm ? "prefork"
@@ -20,7 +21,7 @@ stdenv.mkDerivation rec {
     sha1 = "1d6a8fbc1391d358cc6fe430edc16222b97258d5";
   };
 
-  buildInputs = [perl apr aprutil pcre] ++
+  buildInputs = [perl apr aprutil pcre libiconv] ++
     stdenv.lib.optional sslSupport openssl;
 
   # An apr-util header file includes an apr header file

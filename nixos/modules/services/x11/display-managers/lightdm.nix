@@ -55,7 +55,7 @@ let
       [UserList]
       minimum-uid=500
       hidden-users=${concatStringsSep " " dmcfg.hiddenUsers}
-      hidden-shells=/run/current-system/sw/sbin/nologin
+      hidden-shells=/run/current-system/sw/bin/nologin
     '';
 
   lightdmConf = writeText "lightdm.conf"
@@ -69,6 +69,7 @@ let
       xserver-command = ${xserverWrapper}
       session-wrapper = ${dmcfg.session.script}
       greeter-session = ${cfg.greeter.name}
+      ${cfg.extraSeatDefaults}
     '';
 
   gtkGreeterConf = writeText "lightdm-gtk-greeter.conf"
@@ -107,6 +108,15 @@ in
         description = ''
           The background image or color to use.
         '';
+      };
+
+      extraSeatDefaults = mkOption {
+        type = types.lines;
+        default = "";
+        example = ''
+          greeter-show-manual-login=true
+        '';
+        description = "Extra lines to append to SeatDefaults section.";
       };
 
     };

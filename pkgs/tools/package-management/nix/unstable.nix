@@ -5,11 +5,11 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "nix-1.9pre4074_e659978";
+  name = "nix-1.9pre4100_4bbcfaf";
 
   src = fetchurl {
-    url = "http://hydra.nixos.org/build/20175576/download/4/${name}.tar.xz";
-    sha256 = "51cafd9428cce907a735e37e5dd46f36218351175e458d0834b306d257760204";
+    url = "http://hydra.nixos.org/build/21565942/download/4/${name}.tar.xz";
+    sha256 = "1jcy0n8mi17k5vk89vammfh74lvsgnm4gjsk23cq1shspjnbbgxs";
   };
 
   nativeBuildInputs = [ perl pkgconfig ];
@@ -41,7 +41,7 @@ stdenv.mkDerivation rec {
 
   installFlags = "sysconfdir=$(out)/etc";
 
-  doInstallCheck = true;
+  doInstallCheck = false;
 
   crossAttrs = {
     postUnpack =

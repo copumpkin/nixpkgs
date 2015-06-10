@@ -24,9 +24,9 @@ stdenv.mkDerivation rec {
   enableParallelBuilding = true;
 
   meta = {
-    description = "This project is a QML port of qtermwidget";
+    description = "A QML port of qtermwidget";
     homepage = "https://github.com/Swordifish90/qmltermwidget";
-    licenses = with stdenv.lib.licenses; [ gpl2 ];
+    license = with stdenv.lib.licenses; [ gpl2 ];
     platforms = stdenv.lib.platforms.linux;
     maintainers = with stdenv.lib.maintainers; [ skeidel ];
   };

@@ -18,6 +18,9 @@ assert nativeTools -> nativePrefix != "";
 assert !nativeTools -> cc != null && binutils != null && coreutils != null;
 assert !nativeLibc -> libc != null;
 
+# OS X systems will require a dyld argument.
+assert stdenv.isDarwin -> dyld != null;
+
 # For ghdl (the vhdl language provider to gcc) we need zlib in the wrapper.
 assert cc.langVhdl or false -> zlib != null;
 
@@ -169,6 +172,12 @@ stdenv.mkDerivation {
 
       export real_cc=cc
       export real_cxx=c++
+      export default_cxx_stdlib_compile="${
+        if stdenv.isLinux && !(cc.isGNU or false)
+          then "-isystem $(echo -n ${cc}/include/c++/*) -isystem $(echo -n ${cc}/include/c++/*)/$(${cc}/bin/gcc -dumpmachine)"
+          else ""
+      }"
+
       if [ -e $ccPath/gcc ]; then
         wrap gcc ${./cc-wrapper.sh} $ccPath/gcc
         ln -s gcc $out/bin/cc
@@ -205,7 +214,7 @@ stdenv.mkDerivation {
     ''
 
     + optionalString cc.langGo or false ''
-      wrap ccgo ${./cc-wrapper.sh} $ccPath/gccgo
+      wrap gccgo ${./cc-wrapper.sh} $ccPath/gccgo
     ''
 
     + optionalString cc.langAda or false ''

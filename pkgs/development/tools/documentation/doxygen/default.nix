@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, perl, python, flex, bison, qt4 }:
+{ stdenv, fetchurl, perl, python, flex, bison, qt4, libiconv, CoreServices }:
 
 let
   name = "doxygen-1.8.6";
@@ -14,8 +14,9 @@ stdenv.mkDerivation {
   patches = [ ./tmake.patch ];
 
   buildInputs =
-    [ perl python flex bison ]
-    ++ stdenv.lib.optional (qt4 != null) qt4;
+    [ perl python flex bison libiconv ]
+    ++ stdenv.lib.optional (qt4 != null) qt4
+    ++ stdenv.lib.optional stdenv.isDarwin CoreServices;
 
   prefixKey = "--prefix ";
 
