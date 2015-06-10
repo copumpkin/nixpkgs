@@ -10497,6 +10497,8 @@ let
   emacsMelpa = emacs24PackagesNg; # for backward compatibility
 
   emacs24 = callPackage ../applications/editors/emacs-24 {
+    inherit (darwin) libobjc;
+    inherit (darwin.apple_sdk.frameworks) Foundation CoreData;
     # use override to enable additional features
     libXaw = xlibs.libXaw;
     Xaw3d = null;

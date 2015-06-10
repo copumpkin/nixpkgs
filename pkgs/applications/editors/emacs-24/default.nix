@@ -5,6 +5,7 @@
 , withX ? !stdenv.isDarwin
 , withGTK3 ? false, gtk3 ? null
 , withGTK2 ? true, gtk2
+, libobjc, Foundation, CoreData
 }:
 
 assert (libXft != null) -> libpng != null;	# probably a bug
@@ -37,6 +38,7 @@ stdenv.mkDerivation rec {
 
   buildInputs =
     [ ncurses gconf libxml2 gnutls alsaLib pkgconfig texinfo ]
+    ++ stdenv.lib.optional stdenv.isDarwin [ Foundation libobjc CoreData ]
     ++ stdenv.lib.optional stdenv.isLinux dbus
     ++ stdenv.lib.optionals withX
       [ x11 libXaw Xaw3d libXpm libpng libjpeg libungif libtiff librsvg libXft
@@ -46,7 +48,9 @@ stdenv.mkDerivation rec {
     ++ stdenv.lib.optional (stdenv.isDarwin && withX) cairo;
 
   configureFlags =
-    if withX
+    if stdenv.isDarwin
+      then [ "--with-ns" "--disable-ns-self-contained" ]
+    else if withX
       then [ "--with-x-toolkit=${toolkit}" "--with-xft" ]
       else [ "--with-x=no" "--with-xpm=no" "--with-jpeg=no" "--with-png=no"
              "--with-gif=no" "--with-tiff=no" ];
@@ -57,6 +61,9 @@ stdenv.mkDerivation rec {
   postInstall = ''
     mkdir -p $out/share/emacs/site-lisp/
     cp ${./site-start.el} $out/share/emacs/site-lisp/site-start.el
+  '' + stdenv.lib.optionalString stdenv.isDarwin ''
+    mkdir -p $out/Applications
+    mv nextstep/Emacs.app $out/Applications
   '';
 
   doCheck = true;
