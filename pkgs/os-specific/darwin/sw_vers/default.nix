@@ -1,4 +1,4 @@
-{ stdenv, binutils_raw }:
+{ stdenv, binutils }:
 
 stdenv.mkDerivation {
   name = "sw_vers";
@@ -7,7 +7,7 @@ stdenv.mkDerivation {
     cat >$out/bin/sw_vers <<EOF
     #!${stdenv.shell}
     if test "\$#" -eq 0 ;
-    then 
+    then
       echo "ProductName:    Mac OS X"
       echo "ProductVersion: 10.7.5"
       echo "BuildVersion:   11G63"
