@@ -1,10 +1,10 @@
-{ stdenv, appleDerivation, icu, dyld, libdispatch, launchd, libclosure }:
+{ stdenv, appleDerivation, icu, dyld, libdispatch, libpthread, launchd, libclosure }:
 
 # this project uses blocks, a clang-only extension
 assert stdenv.cc.isClang;
 
 appleDerivation {
-  buildInputs = [ dyld icu libdispatch launchd libclosure ];
+  buildInputs = [ dyld icu libdispatch libpthread launchd libclosure ];
 
   patches = [ ./add-cf-initialize.patch ./add-cfmachport.patch ./cf-bridging.patch ];
 

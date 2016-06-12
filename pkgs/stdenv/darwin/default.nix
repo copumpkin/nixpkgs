@@ -138,13 +138,19 @@ in rec {
           ln -s ${bootstrapTools}/lib/libc++abi.dylib $out/lib/libc++abi.dylib
         '';
       };
-
     };
 
     extraBuildInputs = [];
   };
 
-  persistent0 = _: {};
+  persistent0 = orig: with stage0.pkgs; {
+    inherit libcxx libcxxabi;
+    darwin = orig.darwin // {
+      Libsystem = orig.darwin.Libsystem.override {
+        libresolv = null;
+      };
+    };
+  };
 
   stage1 = with stage0; stageFun 1 stage0 {
     extraPreHook = "export NIX_CFLAGS_COMPILE+=\" -F${bootstrapTools}/Library/Frameworks\"";

@@ -6,8 +6,8 @@ appleDerivation {
   propagatedBuildInputs = [ libdispatch xnu ];
 
   installPhase = ''
-    mkdir -p $out/include/pthread
-    cp pthread/*.h $out/include/pthread/
-    cp private/*.h $out/include/pthread/
+    mkdir -p $out/include/
+    cp -r pthread $out/include
+    cp -r sys $out/include
   '';
 }
