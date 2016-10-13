@@ -12133,6 +12133,8 @@ in
 
   bspwm = callPackage ../applications/window-managers/bspwm { };
 
+  bubblewrap = callPackage ../applications/virtualization/bubblewrap { };
+
   bvi = callPackage ../applications/editors/bvi { };
 
   bviplus = callPackage ../applications/editors/bviplus { };

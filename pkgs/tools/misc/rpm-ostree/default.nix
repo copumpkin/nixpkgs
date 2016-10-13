@@ -1,6 +1,7 @@
 { stdenv, fetchFromGitHub, ostree, rpm, which, autoconf, automake, libtool, pkgconfig,
   libcap, glib, libgsystem, json_glib, libarchive, libsolv, librepo, gtk_doc, elfutils,
-  gperf, cmake, pcre, check, python, libxslt, docbook_xsl, docbook_xml_dtd_42, acl }:
+  gperf, cmake, pcre, check, python, bubblewrap, libxslt, docbook_xsl, docbook_xml_dtd_42,
+  coreutils, acl }:
 
 let
   libglnx-src = fetchFromGitHub {
@@ -55,11 +56,17 @@ in stdenv.mkDerivation {
     # Let's not hardcode the rpm-gpg path...
     substituteInPlace libdnf/libdnf/dnf-keyring.c \
       --replace '"/etc/pki/rpm-gpg"' 'getenv("LIBDNF_RPM_GPG_PATH_OVERRIDE") ? getenv("LIBDNF_RPM_GPG_PATH_OVERRIDE") : "/etc/pki/rpm-gpg"'
+
+    substituteInPlace src/libpriv/rpmostree-bwrap.c \
+      --replace '"--ro-bind", "usr", "/usr"' '"--ro-bind", "/nix", "/nix"' \
+      --replace '"true"' '"${coreutils}/bin/true"'
   '';
 
   preConfigure = ''
     env NOCONFIGURE=1 ./autogen.sh
   '';
+
+  configureFlags = "--with-bubblewrap=${bubblewrap}/bin/bwrap";
 
   meta = with stdenv.lib; {
     description = "A hybrid image/package system. It uses OSTree as an image format, and uses RPM as a component model";
