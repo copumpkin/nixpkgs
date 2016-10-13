@@ -1424,6 +1424,8 @@ in
 
   doomseeker = callPackage ../applications/misc/doomseeker { };
 
+  dracut = callPackage ../tools/misc/dracut { };
+
   drive = callPackage ../applications/networking/drive { };
 
   driftnet = callPackage ../tools/networking/driftnet {};
