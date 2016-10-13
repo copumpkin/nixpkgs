@@ -17,7 +17,8 @@ stdenv.mkDerivation rec {
   prePatch = ''
     patchShebangs ./configure
     substituteInPlace dracut.sh \
-      --replace '/sbin /bin /usr/sbin /usr/bin' '${coreutils}/bin ${utillinux}/bin ${gnugrep}/bin ${gnused}/bin ${gzip}/bin' \
+      --replace 'getopt \' '${utillinux}/bin/getopt \' \
+      --replace '/sbin /bin /usr/sbin /usr/bin' '${coreutils}/bin ${gnugrep}/bin ${gnused}/bin ${gzip}/bin' \
       --replace '/usr/lib/dracut' "$out/lib/dracut"
   '';
 
