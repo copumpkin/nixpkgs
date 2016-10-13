@@ -1,7 +1,7 @@
 { stdenv, fetchFromGitHub, ostree, rpm, which, autoconf, automake, libtool, pkgconfig,
   libcap, glib, libgsystem, json_glib, libarchive, libsolv, librepo, gtk_doc, elfutils,
   gperf, cmake, pcre, check, python, bubblewrap, libxslt, docbook_xsl, docbook_xml_dtd_42,
-  coreutils, acl }:
+  coreutils, kmod, acl }:
 
 let
   libglnx-src = fetchFromGitHub {
@@ -60,6 +60,10 @@ in stdenv.mkDerivation {
     substituteInPlace src/libpriv/rpmostree-bwrap.c \
       --replace '"--ro-bind", "usr", "/usr"' '"--ro-bind", "/nix", "/nix"' \
       --replace '"true"' '"${coreutils}/bin/true"'
+
+    substituteInPlace src/libpriv/rpmostree-postprocess.c \
+      --replace '"--bind", "etc", "/etc",' '"--bind", "etc", "/etc", "--ro-bind", "/nix", "/nix",' \
+      --replace '"depmod"' '"${kmod}/bin/depmod"'
   '';
 
   preConfigure = ''
