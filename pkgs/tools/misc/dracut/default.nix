@@ -1,5 +1,5 @@
 { stdenv, fetchFromGitHub, asciidoc, libxslt, docbook_xsl, docbook_xml_dtd_45,
-  coreutils, utillinux, gnugrep, gnused, gzip }:
+  coreutils, utillinux, gnugrep, gnused, gzip, bzip2, xz }:
 
 stdenv.mkDerivation rec {
   name    = "dracut-${version}";
@@ -18,7 +18,7 @@ stdenv.mkDerivation rec {
     patchShebangs ./configure
     substituteInPlace dracut.sh \
       --replace 'getopt \' '${utillinux}/bin/getopt \' \
-      --replace '/sbin /bin /usr/sbin /usr/bin' '${coreutils}/bin ${gnugrep}/bin ${gnused}/bin ${gzip}/bin' \
+      --replace '/sbin /bin /usr/sbin /usr/bin' '${coreutils}/bin ${gnugrep}/bin ${gnused}/bin ${gzip}/bin ${bzip2}/bin ${xz}/bin' \
       --replace '/usr/lib/dracut' "$out/lib/dracut"
   '';
 
