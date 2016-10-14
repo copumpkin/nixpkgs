@@ -1,7 +1,7 @@
 { stdenv, fetchFromGitHub, ostree, rpm, which, autoconf, automake, libtool, pkgconfig,
   libcap, glib, libgsystem, json_glib, libarchive, libsolv, librepo, gtk_doc, elfutils,
   gperf, cmake, pcre, check, python, bubblewrap, libxslt, docbook_xsl, docbook_xml_dtd_42,
-  coreutils, kmod, dracut, acl }:
+  coreutils, kmod, dracut, acl, fetchpatch }:
 
 let
   libglnx-src = fetchFromGitHub {
@@ -38,6 +38,13 @@ in stdenv.mkDerivation {
   ];
 
   dontUseCmakeConfigure = true;
+
+  patches = [
+    (fetchpatch {
+      url    = "http://github.com/projectatomic/rpm-ostree/pull/491.patch";
+      sha256 = "03kbiy0h228x2639fgp6qpxp4z7sflr4hc6gdx0lrc8gdxfzcyd6";
+    })
+  ];
 
   prePatch = ''
     rmdir libglnx libdnf
