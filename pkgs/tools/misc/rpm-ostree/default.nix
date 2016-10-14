@@ -58,13 +58,13 @@ in stdenv.mkDerivation {
       --replace '"/etc/pki/rpm-gpg"' 'getenv("LIBDNF_RPM_GPG_PATH_OVERRIDE") ? getenv("LIBDNF_RPM_GPG_PATH_OVERRIDE") : "/etc/pki/rpm-gpg"'
 
     substituteInPlace src/libpriv/rpmostree-bwrap.c \
-      --replace '"--ro-bind", "usr", "/usr"' '"--ro-bind", "/nix", "/nix"' \
+      --replace '"--ro-bind", "usr", "/usr"' '"--ro-bind", "usr", "/usr", "--ro-bind", "/nix", "/nix"' \
       --replace '"true"' '"${coreutils}/bin/true"'
 
     substituteInPlace src/libpriv/rpmostree-postprocess.c \
       --replace '"--bind", "etc", "/etc",' '"--bind", "etc", "/etc", "--ro-bind", "/nix", "/nix",' \
       --replace '"depmod"' '"${kmod}/bin/depmod"' \
-      --replace '"dracut"' '"${dracut}/bin/dracut"'
+      --replace '"dracut"' '"/usr/bin/dracut"' # Nasty impurity for now :(
   '';
 
   preConfigure = ''
