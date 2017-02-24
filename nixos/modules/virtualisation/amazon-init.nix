@@ -1,18 +1,20 @@
-{ config, pkgs, ... }:
+{ config, pkgs, modulesPath, ... }:
+
+# This attempts to pull a nix expression from this EC2 instance's user-data.
 
 let
-  script = ''
+  bootScript = pkgs.writeScript "bootscript.sh" ''
     #!${pkgs.stdenv.shell} -eu
 
     echo "attempting to fetch configuration from EC2 user data..."
 
-    export HOME=/root
     export PATH=${pkgs.lib.makeBinPath [ config.nix.package pkgs.systemd pkgs.gnugrep pkgs.gnused config.system.build.nixos-rebuild]}:$PATH
     export NIX_PATH=/nix/var/nix/profiles/per-user/root/channels/nixos:nixos-config=/etc/nixos/configuration.nix:/nix/var/nix/profiles/per-user/root/channels
 
     userData=/etc/ec2-metadata/user-data
 
     if [ -s "$userData" ]; then
+
       # If the user-data looks like it could be a nix expression,
       # copy it over. Also, look for a magic three-hash comment and set
       # that as the channel.
@@ -41,22 +43,7 @@ let
     nixos-rebuild switch
   '';
 in {
-  systemd.services.amazon-init = {
-    inherit script;
-    description = "Reconfigure the system from EC2 userdata on startup";
-
-    wantedBy = [ "sshd.service" ];
-    before = [ "sshd.service" ];
-    after = [ "network-online.target" ];
-    requires = [ "network-online.target" ];
- 
-    restartIfChanged = false;
-    unitConfig.X-StopOnRemoval = false;
-
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-  };
+  boot.postBootCommands = ''
+    ${bootScript} &
+  '';
 }
-
