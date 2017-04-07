@@ -7,11 +7,7 @@
 , # The size of the disk, in megabytes.
   diskSize
 
-  # The files and directories to be placed in the target file system.
-  # This is a list of attribute sets {source, target} where `source'
-  # is the file system object (regular file or directory) to be
-  # grafted in the file system at path `target'.
-, contents ? []
+, contents
 
 , # Whether the disk should be partitioned (with a single partition
   # containing the root filesystem) or contain the root filesystem
@@ -42,114 +38,150 @@
 
 with lib;
 
-pkgs.vmTools.runInLinuxVM (
-  pkgs.runCommand name
-    { preVM =
-        ''
-          mkdir $out
-          diskImage=$out/nixos.${if format == "qcow2" then "qcow2" else "img"}
-          ${pkgs.vmTools.qemu}/bin/qemu-img create -f ${format} $diskImage "${toString diskSize}M"
-          mv closure xchg/
-        '';
-      buildInputs = with pkgs; [ utillinux perl e2fsprogs parted rsync ];
+let
+  # Copied from https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/installer/cd-dvd/channel.nix
+  channelSources = pkgs.runCommand "nixos-${config.system.nixosVersion}" {} ''
+    mkdir -p $out
+    cp -prd ${pkgs.path} $out/nixos
+    chmod -R u+w $out/nixos
+    if [ ! -e $out/nixos/nixpkgs ]; then
+      ln -s . $out/nixos/nixpkgs
+    fi
+    rm -rf $out/nixos/.git
+    echo -n ${config.system.nixosVersionSuffix} > $out/nixos/.version-suffix
+  '';
 
-      # I'm preserving the line below because I'm going to search for it across nixpkgs to consolidate
-      # image building logic. The comment right below this now appears in 4 different places in nixpkgs :)
-      # !!! should use XML.
-      sources = map (x: x.source) contents;
-      targets = map (x: x.target) contents;
+  metaClosure = pkgs.writeText "meta" ''
+    ${config.system.build.toplevel}
+    ${config.nix.package.out}
+    ${channelSources}
+  '';
 
-      exportReferencesGraph =
-        [ "closure" config.system.build.toplevel ];
-      inherit postVM;
-      memSize = 1024;
-    }
-    ''
-      ${if partitioned then ''
-        # Create a single / partition.
-        parted /dev/vda mklabel msdos
-        parted /dev/vda -- mkpart primary ext2 1M -1s
-        . /sys/class/block/vda1/uevent
-        mknod /dev/vda1 b $MAJOR $MINOR
-        rootDisk=/dev/vda1
-      '' else ''
-        rootDisk=/dev/vda
-      ''}
+  prepareImageInputs = with pkgs; [ utillinux parted e2fsprogs rsync fakeroot fakechroot perl lkl config.nix.package ];
 
-      # Create an empty filesystem and mount it.
-      mkfs.${fsType} -L nixos $rootDisk
-      mkdir /mnt
-      mount $rootDisk /mnt
+  prepareImage = ''
+    export PATH=${pkgs.lib.makeSearchPathOutput "bin" "bin" (prepareImageInputs ++ pkgs.stdenv.initialPath)}
+    mkdir $out
+    diskImage=$out/nixos.img
+    truncate -s ${toString diskSize}M $diskImage
+  
+    ${if partitioned then ''
+      parted $diskImage -- mklabel msdos mkpart primary ext4 1M -1s
+      offset=$((2048*512))
+    '' else ''
+      offset=0
+    ''}
+  
+    mkfs.${fsType} -F -L nixos -E offset=$offset $diskImage
+  
+    umask 0022
+  
+    root="$PWD/root"
 
-      # Register the paths in the Nix database.
-      printRegistration=1 perl ${pkgs.pathsFromGraph} /tmp/xchg/closure | \
-          ${config.nix.package.out}/bin/nix-store --load-db --option build-users-group ""
+    # A big chunk of this code was stolen from https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/installer/tools/nixos-install.sh
+    # which we can't use directly because it assumes it owns the machine. TODO: refactor the code so we can share the relevant parts with it. 
+    mkdir -m 0755 -p $root/{dev,proc,sys,etc,run,home}
+    mkdir -m 01777 -p $root/tmp
+    mkdir -m 0755 -p $root/tmp/root
+    mkdir -m 0755 -p $root/var
+    mkdir -m 0700 -p $root/root
+    ln -s /run $root/var/run
+  
+    ln -s /nix/var/nix/profiles/system $root/run/current-system
+  
+    mkdir -m 0755 -p \
+      $root/nix/var/nix/gcroots \
+      $root/nix/var/nix/temproots \
+      $root/nix/var/nix/userpool \
+      $root/nix/var/nix/profiles \
+      $root/nix/var/nix/db \
+      $root/nix/var/log/nix/drvs
+  
+    mkdir -m 1755 -p $root/nix/store
+  
+    echo "copying system closure to staging area..."
+    for i in $(perl ${pkgs.pathsFromGraph} closure); do
+      chattr -R -i $root/$i 2> /dev/null || true # clear immutable bit
+      ${pkgs.rsync}/bin/rsync -a $i $root/nix/store
+    done
 
-      ${if fixValidity then ''
-        # Add missing size/hash fields to the database. FIXME:
-        # exportReferencesGraph should provide these directly.
-        ${config.nix.package.out}/bin/nix-store --verify --check-contents --option build-users-group ""
-      '' else ""}
+    mkdir -m 0755 -p "$root/bin/"
+    ln -sf ${pkgs.stdenv.shell} "$root/bin/sh"
+  
+    mkdir -m 0755 -p "$root/nix/var/nix/profiles"
+    mkdir -m 1777 -p "$root/nix/var/nix/profiles/per-user"
+    mkdir -m 0755 -p "$root/nix/var/nix/profiles/per-user/root"
+  
+    mkdir -m 0700 -p $root/root/.nix-defexpr
+    ln -sfn /nix/var/nix/profiles/per-user/root/channels $root/root/.nix-defexpr/channels
+  
+    ln -sfn /proc/mounts $root/etc/mtab
+  
+    touch $root/etc/NIXOS
 
-      # In case the bootloader tries to write to /dev/sda…
-      ln -s vda /dev/xvda
-      ln -s vda /dev/sda
+    echo "faking stuff..."
+    fakechroot -- chroot $root nix-store --option build-users-group "" --register-validity < closure
 
-      # Install the closure onto the image
-      USER=root ${config.system.build.nixos-install}/bin/nixos-install \
-        --closure ${config.system.build.toplevel} \
-        --no-channel-copy \
-        --no-root-passwd \
-        ${optionalString (!installBootLoader) "--no-bootloader"}
+    # XXX: do I need to do these with nix-env? Not sure if it does anything except create two symlinks, which I then need to fix up...
+    fakechroot -- chroot $root nix-env --option build-users-group "" --option build-use-substitutes false -p /nix/var/nix/profiles/per-user/root/channels --set ${channelSources}
+    fakechroot -- chroot $root nix-env --option build-users-group "" --option build-use-substitutes false -p /nix/var/nix/profiles/system --set ${config.system.build.toplevel}
+    
+    # Fix up the bad symlinks we get as a result of fakechroot above... :(
+    ln -snf ${channelSources} $root/nix/var/nix/profiles/per-user/root/$(readlink $root/nix/var/nix/profiles/per-user/root/channels)
+    ln -snf ${config.system.build.toplevel} $root/nix/var/nix/profiles/$(readlink $root/nix/var/nix/profiles/system)
 
-      # Install a configuration.nix.
-      mkdir -p /mnt/etc/nixos
-      ${optionalString (configFile != null) ''
-        cp ${configFile} /mnt/etc/nixos/configuration.nix
-      ''}
+    ${pkgs.lib.optionalString fixValidity ''
+      echo "fixing validity..."
+      fakechroot -- chroot $root nix-store --verify --check-contents --option build-users-group ""
+    ''}
 
-      # Remove /etc/machine-id so that each machine cloning this image will get its own id
-      rm -f /mnt/etc/machine-id
+    echo "copying staging root to image..."
+    cptofs ${pkgs.lib.optionalString partitioned "-P 1"} -t ${fsType} -i $diskImage $root/* /
+  '';
+in pkgs.vmTools.runInLinuxVM (
+  pkgs.runCommand name {
+    preVM = prepareImage;
+    buildInputs = with pkgs; [ utillinux config.nix.package e2fsprogs ];
+    exportReferencesGraph = [ "closure" metaClosure ];
+    inherit postVM;
+    memSize = 1024;
+  }
+  # This entire VM block exists because the activation and switch-to-configuration scripts assume global things, and currently need to be run
+  # inside a real chroot (unlike the fakechroots we have above). If we can kill those parts, we can kill the VM stuff altogether, which takes
+  # the majority of the build time on EC2, even with a ~1G store.
+  ''
+    ${if partitioned then ''
+      . /sys/class/block/vda1/uevent
+      mknod /dev/vda1 b $MAJOR $MINOR
+      rootDisk=/dev/vda1
+    '' else ''
+      rootDisk=/dev/vda
+    ''}
 
-      # Copy arbitrary other files into the image
-      # Semi-shamelessly copied from make-etc.sh. I (@copumpkin) shall factor this stuff out as part of
-      # https://github.com/NixOS/nixpkgs/issues/23052.
-      set -f
-      sources_=($sources)
-      targets_=($targets)
-      set +f
+    ln -s vda /dev/xvda
+    ln -s vda /dev/sda
 
-      for ((i = 0; i < ''${#targets_[@]}; i++)); do
-        source="''${sources_[$i]}"
-        target="''${targets_[$i]}"
+    mountPoint=/mnt
 
-        if [[ "$source" =~ '*' ]]; then
+    mkdir $mountPoint
+    mount $rootDisk $mountPoint
 
-          # If the source name contains '*', perform globbing.
-          mkdir -p /mnt/$target
-          for fn in $source; do
-            rsync -a --no-o --no-g "$fn" /mnt/$target/
-          done
+    mount --rbind /dev $mountPoint/dev
+    mount --rbind /proc $mountPoint/proc
+    mount --rbind /sys $mountPoint/sys
 
-        else
+    NIXOS_INSTALL_BOOTLOADER=1 chroot $mountPoint /nix/var/nix/profiles/system/bin/switch-to-configuration boot
 
-          mkdir -p /mnt/$(dirname $target)
-          if ! [ -e /mnt/$target ]; then
-            rsync -a --no-o --no-g $source /mnt/$target
-          else
-            echo "duplicate entry $target -> $source"
-            exit 1
-          fi
-        fi
-      done
+    chroot $mountPoint /nix/var/nix/profiles/system/activate
 
-      umount /mnt
+    rm -f $mountPoint/etc/machine-id
 
-      # Make sure resize2fs works. Note that resize2fs has stricter criteria for resizing than a normal
-      # mount, so the `-c 0` and `-i 0` don't affect it. Setting it to `now` doesn't produce deterministic
-      # output, of course, but we can fix that when/if we start making images deterministic.
-      ${optionalString (fsType == "ext4") ''
-        tune2fs -T now -c 0 -i 0 $rootDisk
-      ''}
-    ''
+    # Make sure resize2fs works. Note that resize2fs has stricter criteria for resizing than a normal
+    # mount, so the `-c 0` and `-i 0` don't affect it. Setting it to `now` doesn't produce deterministic
+    # output, of course, but we can fix that when/if we start making images deterministic.
+    ${optionalString (fsType == "ext4") ''
+      tune2fs -T now -c 0 -i 0 $rootDisk
+    ''}
+  ''
 )
+
