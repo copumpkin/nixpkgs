@@ -1,0 +1,16 @@
+diff --git a/libkern/libkern/Makefile b/libkern/libkern/Makefile
+index db47522..2e3132d 100644
+--- a/libkern/libkern/Makefile
++++ b/libkern/libkern/Makefile
+@@ -75,7 +75,11 @@ EXPORT_MI_LIST = \
+        kxld_types.h           \
+        stack_protector.h
+ 
++INSTALL_KF_MI_LCL_LIST += \
++       section_keywords.h
+ 
++EXPORT_MI_LIST += \
++       section_keywords.h
+ 
+ EXPORT_MI_GEN_LIST = version.h
+ 

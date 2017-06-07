@@ -16,8 +16,10 @@ appleDerivation {
     popd
 
     pushd libdwarf
-    ./configure CFLAGS="$CFLAGS -Icmplrs"
-    make
+    for f in *.c; do
+        cc -Icmplrs -DNDEBUG -DNS_BLOCK_ASSERTIONS $CFLAGS -c $f
+    done
+    libtool -static -o libdwarf.a *.o
     popd
 
     cp libelf/libelf.a     tools/ctfconvert
