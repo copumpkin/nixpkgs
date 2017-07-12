@@ -19,7 +19,7 @@
 
 /usr/lib/system/libsystem_configuration.dylib
 /usr/lib/system/libsystem_coreservices.dylib
-/usr/lib/system/libsystem_coretls.dylib
+# /usr/lib/system/libsystem_coretls.dylib # This is gone in High Sierra; will it break others?
 /usr/lib/system/libsystem_dnssd.dylib
 /usr/lib/system/libsystem_info.dylib
 
