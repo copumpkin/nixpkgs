@@ -12,7 +12,7 @@
     bzip2   = fetch { file = "bzip2"; sha256 = "1jqljpjr8mkiv7g5rl5impqx3all8vn1mxxdwa004pr3h48c1zgg"; };
     mkdir   = fetch { file = "mkdir"; sha256 = "17zsjiwnq07i5r85q1hg7f6cnkcgllwy2amz9klaqwjy4vzz4vwh"; };
     cpio    = fetch { file = "cpio";  sha256 = "04hrair58dgja6syh442pswiga5an9nl58ls57yknkn2pq51nx9m"; };
-    tarball = fetch { file = "bootstrap-tools.cpio.bz2"; sha256 = "103833hrci0vwi1gi978hkp69rncicvpdszn87ffpf1cq0jzpa14"; executable = false; };
+    tarball = fetch { file = "bootstrap-tools.cpio.bz2"; sha256 = "0zmfyqxcyx199ffk5vf9r0z40b6c13w54cn98js82hyssmmxh4rf"; executable = false; };
   }
 }:
 
@@ -20,12 +20,9 @@ assert crossSystem == null;
 
 let
   inherit (localSystem) system platform;
-
-  libSystemProfile = ''
-    (import "${./standard-sandbox.sb}")
-  '';
 in rec {
   commonPreHook = ''
+    # test
     export NIX_ENFORCE_PURITY="''${NIX_ENFORCE_PURITY-1}"
     export NIX_ENFORCE_NO_NATIVE="''${NIX_ENFORCE_NO_NATIVE-1}"
     export NIX_IGNORE_LD_THROUGH_GCC=1
@@ -37,10 +34,22 @@ in rec {
     export gl_cv_func_getcwd_abort_bug=no
   '';
 
+  # libSystem and its transitive dependencies. Get used to this; it's a recurring theme in darwin land
+  libSystemClosure = [
+    "/usr/lib/libSystem.dylib"
+    "/usr/lib/libSystem.B.dylib"
+    "/usr/lib/libobjc.A.dylib"
+    "/usr/lib/libobjc.dylib"
+    "/usr/lib/libauto.dylib"
+    "/usr/lib/libc++abi.dylib"
+    "/usr/lib/libc++.1.dylib"
+    "/usr/lib/libDiagnosticMessagesClient.dylib"
+    "/usr/lib/system"
+    "/usr/lib/dyld"
+  ];
+
   # The one dependency of /bin/sh :(
-  binShClosure = ''
-    (allow file-read* (literal "/usr/lib/libncurses.5.4.dylib"))
-  '';
+  binShClosure = [ "/usr/lib/libncurses.5.4.dylib" ];
 
   bootstrapTools = derivation rec {
     inherit system;
@@ -53,7 +62,7 @@ in rec {
     reexportedLibrariesFile =
       ../../os-specific/darwin/apple-source-releases/Libsystem/reexported_libraries;
 
-    __sandboxProfile = binShClosure + libSystemProfile;
+    __impureHostDeps = binShClosure ++ libSystemClosure;
   };
 
   stageFun = step: last: {shell             ? "${bootstrapTools}/bin/bash",
@@ -108,8 +117,8 @@ in rec {
         };
 
         # The stdenvs themselves don't use mkDerivation, so I need to specify this here
-        stdenvSandboxProfile = binShClosure + libSystemProfile;
-        extraSandboxProfile  = binShClosure + libSystemProfile;
+        __stdenvImpureHostDeps = binShClosure ++ libSystemClosure;
+        __extraImpureHostDeps  = binShClosure ++ libSystemClosure;
 
         extraAttrs = {
           inherit platform;
@@ -159,7 +168,6 @@ in rec {
           ln -s ${bootstrapTools}/lib/libc++abi.dylib $out/lib/libc++abi.dylib
         '';
       };
-
     };
 
     extraNativeBuildInputs = [];
@@ -167,7 +175,7 @@ in rec {
   };
 
   stage1 = prevStage: let
-    persistent = _: _: {};
+    persistent = _: super: { python = super.python.override { configd = null; }; };
   in with prevStage; stageFun 1 prevStage {
     extraPreHook = "export NIX_CFLAGS_COMPILE+=\" -F${bootstrapTools}/Library/Frameworks\"";
     extraNativeBuildInputs = [];
@@ -189,7 +197,7 @@ in rec {
 
       darwin = super.darwin // {
         inherit (darwin)
-          dyld Libsystem xnu configd ICU libdispatch libclosure launchd;
+         dyld Libsystem xnu configd ICU libdispatch libclosure launchd;
       };
     };
   in with prevStage; stageFun 2 prevStage {
@@ -317,8 +325,8 @@ in rec {
       export PATH_LOCALE=${pkgs.darwin.locale}/share/locale
     '';
 
-    stdenvSandboxProfile = binShClosure + libSystemProfile;
-    extraSandboxProfile  = binShClosure + libSystemProfile;
+    __stdenvImpureHostDeps = binShClosure ++ libSystemClosure;
+    __extraImpureHostDeps  = binShClosure ++ libSystemClosure;
 
     initialPath = import ../common-path.nix { inherit pkgs; };
     shell       = "${pkgs.bash}/bin/bash";
@@ -364,6 +372,10 @@ in rec {
         clang = cc;
         llvmPackages = persistent'.llvmPackages // { clang = cc; };
         inherit cc;
+
+        darwin = super.darwin // {
+          xnu = super.darwin.xnu.override { python = super.python.override { configd = null; }; };
+        };
       };
   };
 
