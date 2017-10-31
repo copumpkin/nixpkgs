@@ -197,16 +197,16 @@ in rec {
   };
 
   overrides = super: {
-    QuartzCore = stdenv.lib.overrideDerivation super.QuartzCore (drv: {
-      installPhase = drv.installPhase + ''
-        f="$out/Library/Frameworks/QuartzCore.framework/Headers/CoreImage.h"
-        substituteInPlace "$f" \
-          --replace "QuartzCore/../Frameworks/CoreImage.framework/Headers" "CoreImage"
-      '';
+    AppKit = stdenv.lib.overrideDerivation super.AppKit (drv: {
+      __propagatedImpureHostDeps = drv.__propagatedImpureHostDeps ++ [
+        "/System/Library/PrivateFrameworks/"
+      ];
     });
 
-    AppKit = stdenv.lib.overrideDerivation super.AppKit (orig: {
-      __propagatedImpureHostDeps = orig.__propagatedImpureHostDeps ++ [ "/System/Library/PrivateFrameworks/" ];
+    CoreMedia = stdenv.lib.overrideDerivation super.CoreMedia (drv: {
+      __propagatedImpureHostDeps = drv.__propagatedImpureHostDeps ++ [
+        "/System/Library/Frameworks/CoreImage.framework"
+      ];
     });
 
     #CoreServices = stdenv.lib.overrideDerivation super.CoreServices (drv: {
@@ -217,6 +217,14 @@ in rec {
 
     Security = stdenv.lib.overrideDerivation super.Security (drv: {
       setupHook = ./security-setup-hook.sh;
+    });
+
+    QuartzCore = stdenv.lib.overrideDerivation super.QuartzCore (drv: {
+      installPhase = drv.installPhase + ''
+        f="$out/Library/Frameworks/QuartzCore.framework/Headers/CoreImage.h"
+        substituteInPlace "$f" \
+          --replace "QuartzCore/../Frameworks/CoreImage.framework/Headers" "CoreImage"
+      '';
     });
   };
 
