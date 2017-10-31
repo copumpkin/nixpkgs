@@ -141,6 +141,7 @@ let
     # The setup-hook ensures that everyone uses the impure CoreFoundation who uses these SDK frameworks, so let's expose it
       "/System/Library/Frameworks/CoreFoundation.framework"
       "/System/Library/Frameworks/${name}.framework"
+      "/System/Library/Frameworks/${name}.framework/${name}"
     ];
 
     meta = with stdenv.lib; {
