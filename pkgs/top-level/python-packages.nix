@@ -15086,6 +15086,8 @@ in {
 
     propagatedBuildInputs = with self; [ cryptography pyasn1 ];
 
+    __darwinAllowLocalNetworking = true;
+
     # https://github.com/paramiko/paramiko/issues/449
     doCheck = !(isPyPy || isPy33);
     checkPhase = ''
